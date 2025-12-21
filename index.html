@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧩 甜心數獨 - Cute Sudoku</title>
+    <meta name="description" content="一款可愛風格的數獨益智遊戲，支援三種難度，適合所有年齡層！">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🧩 PC's Sudoku 🧩</h1>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-label">時間</span>
+                    <span class="stat-value" id="timer">00:00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">錯誤</span>
+                    <span class="stat-value" id="mistakes">0/3</span>
+                </div>
+                <div class="stat-item difficulty-selector">
+                    <span class="stat-label">難度</span>
+                    <select id="difficulty" class="difficulty-select">
+                        <option value="easy" selected>簡單</option>
+                        <option value="medium">中等</option>
+                        <option value="hard">困難</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-board-wrapper">
+            <div class="sudoku-board" id="sudoku-board"></div>
+        </div>
+
+        <div class="number-pad">
+            <button class="num-btn" data-num="1">1</button>
+            <button class="num-btn" data-num="2">2</button>
+            <button class="num-btn" data-num="3">3</button>
+            <button class="num-btn" data-num="4">4</button>
+            <button class="num-btn" data-num="5">5</button>
+            <button class="num-btn" data-num="6">6</button>
+            <button class="num-btn" data-num="7">7</button>
+            <button class="num-btn" data-num="8">8</button>
+            <button class="num-btn" data-num="9">9</button>
+            <button class="num-btn erase-btn" data-num="0">⌫</button>
+        </div>
+
+        <div class="game-controls">
+            <button class="btn btn-notes" id="notes-btn">
+                <span class="btn-icon">✏️</span>
+                <span>筆記</span>
+            </button>
+            <button class="btn btn-hint" id="hint-btn">
+                <span class="btn-icon">💡</span>
+                <span>提示</span>
+            </button>
+            <button class="btn btn-restart" id="restart-btn">
+                <span class="btn-icon">🔄</span>
+                <span>新遊戲</span>
+            </button>
+        </div>
+
+        <div class="message-overlay" id="message-overlay">
+            <div class="message-content">
+                <div class="message-icon" id="message-icon">🎉</div>
+                <div class="message-text" id="message-text">恭喜完成！</div>
+                <div class="message-subtext" id="message-subtext"></div>
+                <button class="btn btn-restart message-btn" id="play-again-btn">再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-decorations" id="floating-decorations"></div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
