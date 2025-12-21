@@ -6,6 +6,7 @@ class SudokuGame {
         this.selectedCell = null;
         this.notesMode = false;
         this.notes = [];
+        this.lastInputNumber = null; // 記錄上次輸入的數字
         this.mistakes = 0;
         this.maxMistakes = 10;
         this.timer = 0;
@@ -195,12 +196,26 @@ class SudokuGame {
     selectCell(row, col) {
         if (this.gameOver) return;
 
+        const cellData = this.board[row][col];
+        const previousCell = this.selectedCell;
+
         // Clear previous selection
         document.querySelectorAll('.sudoku-cell').forEach(cell => {
             cell.classList.remove('selected', 'highlighted', 'same-number', 'error-highlight');
         });
 
         this.selectedCell = { row, col };
+
+        // 自動帶入上次輸入的數字
+        // 條件：有上次輸入的數字、當前格子不是固定格子、當前格子是空的、不是選擇同一個格子
+        if (this.lastInputNumber !== null &&
+            !cellData.fixed &&
+            cellData.value === 0 &&
+            !(previousCell && previousCell.row === row && previousCell.col === col)) {
+            this.inputNumber(this.lastInputNumber);
+            return; // inputNumber 會重新呼叫 selectCell，所以這裡直接返回
+        }
+
         const selectedValue = this.board[row][col].value;
 
         // Highlight related cells
@@ -252,7 +267,9 @@ class SudokuGame {
                 cellData.value = 0;
                 cellData.isError = false;
                 this.notes[row][col].clear();
+                this.lastInputNumber = null; // 清除時重置上次輸入的數字
             } else {
+                this.lastInputNumber = num; // 記錄輸入的數字
                 this.notes[row][col].clear();
 
                 if (num !== this.solution[row][col]) {
