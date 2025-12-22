@@ -561,7 +561,7 @@ class SudokuGame {
         if (won) {
             board.classList.add('victory');
             this.createConfetti();
-            this.showMessage('🎉', '恭喜完成！', `用時：${this.formatTime(this.timer)}`);
+            this.showMessage('🎉', '恭喜完成！', '寶貝 我愛你', `用時：${this.formatTime(this.timer)}`);
         } else {
             this.showMessage('😢', '遊戲結束', '錯誤次數已達上限');
         }
@@ -648,18 +648,83 @@ class SudokuGame {
     }
 
     createConfetti() {
-        const colors = ['#ff6b9d', '#c9b1ff', '#98e4c9', '#ffcba4', '#fff3b0', '#ff7e79'];
+        // 華麗的破關慶祝特效！
+        this.createConfettiWave(0);
+        this.createConfettiWave(500);
+        this.createConfettiWave(1000);
+        this.createEmojiExplosion();
+        this.createFireworks();
+        this.createScreenFlash();
+    }
 
-        for (let i = 0; i < 50; i++) {
-            const confetti = document.createElement('div');
-            confetti.className = 'confetti';
-            confetti.style.left = `${Math.random() * 100}%`;
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.animationDelay = `${Math.random() * 2}s`;
-            document.body.appendChild(confetti);
+    createConfettiWave(delay) {
+        const colors = ['#ff6b9d', '#c9b1ff', '#98e4c9', '#ffcba4', '#fff3b0', '#ff7e79', '#87ceeb', '#ffd700', '#ff69b4', '#00ff7f'];
+        const shapes = ['square', 'circle', 'triangle'];
 
-            setTimeout(() => confetti.remove(), 5000);
+        setTimeout(() => {
+            for (let i = 0; i < 80; i++) {
+                const confetti = document.createElement('div');
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                confetti.className = `confetti confetti-${shape}`;
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = `${Math.random() * 1.5}s`;
+                confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 6000);
+            }
+        }, delay);
+    }
+
+    createEmojiExplosion() {
+        const emojis = ['🎉', '🎊', '✨', '🌟', '💫', '⭐', '🏆', '👑', '💖', '🎯', '🔥', '💥', '🎆', '🎇'];
+
+        for (let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji-explosion';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = `${20 + Math.random() * 60}%`;
+                emoji.style.top = `${20 + Math.random() * 60}%`;
+                emoji.style.fontSize = `${1.5 + Math.random() * 2}rem`;
+                emoji.style.animationDelay = `${Math.random() * 0.5}s`;
+                document.body.appendChild(emoji);
+
+                setTimeout(() => emoji.remove(), 3000);
+            }, i * 100);
         }
+    }
+
+    createFireworks() {
+        const colors = ['#ff0000', '#ffd700', '#00ff00', '#00bfff', '#ff69b4', '#ff4500'];
+
+        for (let f = 0; f < 5; f++) {
+            setTimeout(() => {
+                const centerX = 20 + Math.random() * 60;
+                const centerY = 20 + Math.random() * 40;
+
+                for (let i = 0; i < 12; i++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'firework-spark';
+                    spark.style.left = `${centerX}%`;
+                    spark.style.top = `${centerY}%`;
+                    spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    spark.style.setProperty('--angle', `${i * 30}deg`);
+                    spark.style.setProperty('--distance', `${60 + Math.random() * 40}px`);
+                    document.body.appendChild(spark);
+
+                    setTimeout(() => spark.remove(), 1500);
+                }
+            }, f * 400);
+        }
+    }
+
+    createScreenFlash() {
+        const flash = document.createElement('div');
+        flash.className = 'screen-flash';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
     }
 
     setupEventListeners() {
