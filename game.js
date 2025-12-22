@@ -13,6 +13,9 @@ class SudokuGame {
         this.timerInterval = null;
         this.gameOver = false;
         this.difficulty = 'medium';
+        this.gameMode = 'normal'; // 'normal' 或 'killer'
+        this.cages = []; // 殺手數獨的籠子
+        this.cellToCage = []; // 每個格子對應的籠子索引
         this.difficultySettings = {
             easy: 38,      // 38 cells revealed
             medium: 30,    // 30 cells revealed
@@ -30,14 +33,21 @@ class SudokuGame {
 
     newGame() {
         this.difficulty = document.getElementById('difficulty').value;
+        this.gameMode = document.getElementById('game-mode').value;
         this.board = Array(9).fill(null).map(() => Array(9).fill(0));
         this.notes = Array(9).fill(null).map(() =>
             Array(9).fill(null).map(() => new Set())
         );
+        this.cages = [];
+        this.cellToCage = Array(9).fill(null).map(() => Array(9).fill(-1));
         this.selectedCell = null;
         this.mistakes = 0;
+        // 殺手模式允許更多錯誤次數
+        this.maxMistakes = this.gameMode === 'killer' ? 20 : 10;
         this.gameOver = false;
         this.timer = 0;
+        this.lastInputNumber = null;
+        this.updateAutoFillHighlight();
 
         this.generatePuzzle();
         this.renderBoard();
@@ -57,38 +67,146 @@ class SudokuGame {
                 this.board[i][j] = {
                     value: this.solution[i][j],
                     fixed: false,
-                    isError: false
+                    isError: false,
+                    cageIndex: -1
                 };
             }
         }
 
-        // Remove numbers based on difficulty
-        const cellsToReveal = this.difficultySettings[this.difficulty];
-        const cellsToRemove = 81 - cellsToReveal;
-
-        let removed = 0;
-        const positions = [];
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                positions.push([i, j]);
+        if (this.gameMode === 'killer') {
+            // 殺手數獨：生成籠子，所有格子都是空的
+            this.generateCages();
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    this.board[i][j].value = 0;
+                    this.board[i][j].fixed = false;
+                }
             }
-        }
-        this.shuffleArray(positions);
+        } else {
+            // 一般數獨：移除部分數字
+            const cellsToReveal = this.difficultySettings[this.difficulty];
+            const cellsToRemove = 81 - cellsToReveal;
 
-        for (const [row, col] of positions) {
-            if (removed >= cellsToRemove) break;
-            this.board[row][col].value = 0;
-            removed++;
-        }
+            let removed = 0;
+            const positions = [];
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    positions.push([i, j]);
+                }
+            }
+            this.shuffleArray(positions);
 
-        // Mark remaining cells as fixed
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                if (this.board[i][j].value !== 0) {
-                    this.board[i][j].fixed = true;
+            for (const [row, col] of positions) {
+                if (removed >= cellsToRemove) break;
+                this.board[row][col].value = 0;
+                removed++;
+            }
+
+            // Mark remaining cells as fixed
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (this.board[i][j].value !== 0) {
+                        this.board[i][j].fixed = true;
+                    }
                 }
             }
         }
+    }
+
+    generateCages() {
+        // 生成殺手數獨的籠子
+        const visited = Array(9).fill(null).map(() => Array(9).fill(false));
+        const cageSizesByDifficulty = {
+            easy: { min: 2, max: 3 },
+            medium: { min: 2, max: 4 },
+            hard: { min: 2, max: 5 }
+        };
+        const { min: minSize, max: maxSize } = cageSizesByDifficulty[this.difficulty];
+
+        let cageIndex = 0;
+
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                if (!visited[i][j]) {
+                    const cage = this.growCage(i, j, visited, minSize, maxSize);
+                    if (cage.cells.length > 0) {
+                        // 計算籠子的總和
+                        let sum = 0;
+                        for (const [r, c] of cage.cells) {
+                            sum += this.solution[r][c];
+                            this.cellToCage[r][c] = cageIndex;
+                            this.board[r][c].cageIndex = cageIndex;
+                        }
+                        cage.sum = sum;
+                        cage.index = cageIndex;
+                        this.cages.push(cage);
+                        cageIndex++;
+                    }
+                }
+            }
+        }
+    }
+
+    growCage(startRow, startCol, visited, minSize, maxSize) {
+        const cage = { cells: [], sum: 0 };
+        const targetSize = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+        const queue = [[startRow, startCol]];
+        const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+
+        while (cage.cells.length < targetSize && queue.length > 0) {
+            // 隨機選擇一個候選格子
+            const randomIndex = Math.floor(Math.random() * queue.length);
+            const [row, col] = queue.splice(randomIndex, 1)[0];
+
+            if (visited[row][col]) continue;
+
+            visited[row][col] = true;
+            cage.cells.push([row, col]);
+
+            // 添加相鄰的未訪問格子到候選隊列
+            for (const [dr, dc] of directions) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                if (newRow >= 0 && newRow < 9 && newCol >= 0 && newCol < 9 && !visited[newRow][newCol]) {
+                    queue.push([newRow, newCol]);
+                }
+            }
+        }
+
+        return cage;
+    }
+
+    getCageBorders(row, col) {
+        // 計算格子在籠子中的邊框位置
+        const cageIndex = this.cellToCage[row][col];
+        if (cageIndex === -1) return { top: false, right: false, bottom: false, left: false };
+
+        const borders = { top: true, right: true, bottom: true, left: true };
+
+        // 檢查相鄰格子是否在同一籠子
+        if (row > 0 && this.cellToCage[row - 1][col] === cageIndex) borders.top = false;
+        if (row < 8 && this.cellToCage[row + 1][col] === cageIndex) borders.bottom = false;
+        if (col > 0 && this.cellToCage[row][col - 1] === cageIndex) borders.left = false;
+        if (col < 8 && this.cellToCage[row][col + 1] === cageIndex) borders.right = false;
+
+        return borders;
+    }
+
+    isTopLeftOfCage(row, col) {
+        // 檢查是否是籠子的左上角（用於顯示總和）
+        const cageIndex = this.cellToCage[row][col];
+        if (cageIndex === -1) return false;
+
+        const cage = this.cages[cageIndex];
+        // 找到籠子中最左上的格子
+        let minRow = 9, minCol = 9;
+        for (const [r, c] of cage.cells) {
+            if (r < minRow || (r === minRow && c < minCol)) {
+                minRow = r;
+                minCol = c;
+            }
+        }
+        return row === minRow && col === minCol;
     }
 
     fillBoard(board) {
@@ -162,11 +280,47 @@ class SudokuGame {
 
                 const cellData = this.board[row][col];
 
+                // 殺手數獨：添加籠子背景顏色和邊框
+                if (this.gameMode === 'killer') {
+                    cell.classList.add('killer-mode');
+                    const cageIndex = this.cellToCage[row][col];
+                    if (cageIndex !== -1) {
+                        // 使用 8 種顏色循環
+                        const colorIndex = cageIndex % 8;
+                        cell.classList.add(`cage-color-${colorIndex}`);
+
+                        // 添加籠子邊框
+                        const borders = this.getCageBorders(row, col);
+                        if (borders.top) cell.classList.add('cage-border-top');
+                        if (borders.right) cell.classList.add('cage-border-right');
+                        if (borders.bottom) cell.classList.add('cage-border-bottom');
+                        if (borders.left) cell.classList.add('cage-border-left');
+                    }
+
+                    // 在籠子左上角顯示總和
+                    if (this.isTopLeftOfCage(row, col)) {
+                        const cage = this.cages[cageIndex];
+                        const sumLabel = document.createElement('span');
+                        sumLabel.className = 'cage-sum';
+                        sumLabel.textContent = cage.sum;
+                        cell.appendChild(sumLabel);
+                    }
+                }
+
                 if (cellData.fixed) {
                     cell.classList.add('fixed');
                     cell.textContent = cellData.value;
                 } else if (cellData.value !== 0) {
-                    cell.textContent = cellData.value;
+                    // 保留籠子總和標籤
+                    const existingSum = cell.querySelector('.cage-sum');
+                    if (existingSum) {
+                        const valueSpan = document.createElement('span');
+                        valueSpan.className = 'cell-value';
+                        valueSpan.textContent = cellData.value;
+                        cell.appendChild(valueSpan);
+                    } else {
+                        cell.textContent = cellData.value;
+                    }
                     if (cellData.isError) {
                         cell.classList.add('error');
                     }
@@ -206,9 +360,10 @@ class SudokuGame {
 
         this.selectedCell = { row, col };
 
-        // 自動帶入上次輸入的數字
-        // 條件：有上次輸入的數字、當前格子不是固定格子、當前格子是空的、不是選擇同一個格子
-        if (this.lastInputNumber !== null &&
+        // 自動帶入上次輸入的數字（殺手模式關閉此功能）
+        // 條件：有上次輸入的數字、當前格子不是固定格子、當前格子是空的、不是選擇同一個格子、不是殺手模式
+        if (this.gameMode !== 'killer' &&
+            this.lastInputNumber !== null &&
             !cellData.fixed &&
             cellData.value === 0 &&
             !(previousCell && previousCell.row === row && previousCell.col === col)) {
@@ -316,6 +471,9 @@ class SudokuGame {
         document.querySelectorAll('.num-btn[data-num]').forEach(btn => {
             btn.classList.remove('auto-fill-active');
         });
+
+        // 殺手模式不顯示自動帶入高亮
+        if (this.gameMode === 'killer') return;
 
         // 如果有記憶的數字，高亮對應按鈕
         if (this.lastInputNumber !== null && this.lastInputNumber !== 0) {
@@ -521,6 +679,9 @@ class SudokuGame {
 
         // Difficulty change
         document.getElementById('difficulty').addEventListener('change', () => this.newGame());
+
+        // Game mode change
+        document.getElementById('game-mode').addEventListener('change', () => this.newGame());
 
         // Keyboard support
         document.addEventListener('keydown', (e) => {

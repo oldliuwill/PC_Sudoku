@@ -6,7 +6,7 @@
 
 :root {
     --primary-pink: #6b6eff;
-    --secondary-pink: #95ff8f;
+    --secondary-pink: #389b24;
     --light-pink: #c2e2ff;
     --pale-pink: #fff0f5;
     --purple: #c9b1ff;
@@ -21,7 +21,7 @@
     --glow-color: rgba(100, 171, 106, 0.5);
     --error-color: #ff2929;
     --success-color: #51cf66;
-    --highlight-color: rgba(221, 255, 221, 0.76);
+    --highlight-color: rgba(236, 255, 221, 0.829);
     --same-number-color: rgba(228, 221, 243, 0.87);
 }
 
@@ -98,9 +98,10 @@ body::before {
 
 .stats-bar {
     display: flex;
-    justify-content: center;
-    gap: 12px;
+    justify-content: space-evenly;
+    gap: 8px;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 .stat-item {
@@ -120,7 +121,7 @@ body::before {
 
 .stat-label {
     display: block;
-    font-size: 0.7rem;
+    font-size: 1.2rem;
     color: var(--secondary-pink);
     font-weight: 600;
     text-transform: uppercase;
@@ -137,7 +138,7 @@ body::before {
 
 .difficulty-select {
     font-family: 'Nunito', sans-serif;
-    font-size: 1rem;
+    font-size: 1.0rem;
     font-weight: 700;
     color: var(--primary-pink);
     background: transparent;
@@ -244,6 +245,93 @@ body::before {
     background: rgba(255, 107, 107, 0.2);
 }
 
+/* Killer Sudoku Cage Styles */
+.sudoku-cell.killer-mode {
+    position: relative;
+}
+
+/* 8 種柔和的籠子背景顏色 */
+.sudoku-cell.cage-color-0 {
+    background: rgba(255, 180, 180, 0.938) !important;
+    /* 淺粉紅 */
+}
+
+.sudoku-cell.cage-color-1 {
+    background: rgb(202, 242, 255) !important;
+    /* 淺藍 */
+}
+
+.sudoku-cell.cage-color-2 {
+    background: rgb(155, 255, 155) !important;
+    /* 淺綠 */
+}
+
+.sudoku-cell.cage-color-3 {
+    background: rgb(255, 255, 156) !important;
+    /* 淺黃 */
+}
+
+.sudoku-cell.cage-color-4 {
+    background: rgb(248, 150, 255) !important;
+    /* 淺紫 */
+}
+
+.sudoku-cell.cage-color-5 {
+    background: rgb(255, 207, 202) !important;
+    /* 淺橙 */
+}
+
+.sudoku-cell.cage-color-6 {
+    background: rgb(160, 244, 255) !important;
+    /* 淺青 */
+}
+
+.sudoku-cell.cage-color-7 {
+    background: rgb(255, 211, 128) !important;
+    /* 淺棕 */
+}
+
+/* 籠子邊框 - 細小紅色實線 */
+.sudoku-cell.cage-border-top {
+    border-top: 2px solid #ff4545 !important;
+}
+
+.sudoku-cell.cage-border-right {
+    border-right: 2px solid #ff3939 !important;
+}
+
+.sudoku-cell.cage-border-bottom {
+    border-bottom: 2px solid #fc4747 !important;
+}
+
+.sudoku-cell.cage-border-left {
+    border-left: 2px solid #cc3333 !important;
+}
+
+.cage-sum {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #333;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 1px 3px;
+    border-radius: 3px;
+    line-height: 1;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.sudoku-cell.killer-mode .cell-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.sudoku-cell.killer-mode .notes {
+    margin-top: 8px;
+}
+
 @keyframes shake {
 
     0%,
@@ -285,19 +373,25 @@ body::before {
 /* Notes styling */
 .sudoku-cell .notes {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(3, auto);
+    grid-template-rows: repeat(3, auto);
+    gap: 0px;
     width: 100%;
     height: 100%;
-    font-size: 0.55rem;
-    color: var(--purple);
-    font-weight: 600;
+    font-size: 0.7rem;
+    color: #03c70d;
+    font-weight: 700;
+    justify-content: center;
+    align-content: center;
 }
 
 .sudoku-cell .notes span {
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 10px;
+    height: 10px;
+    line-height: 1;
 }
 
 /* Number pad */
@@ -419,6 +513,8 @@ body::before {
 .btn-notes.active {
     background: linear-gradient(135deg, var(--purple), #a78bfa);
     box-shadow: 0 4px 20px rgba(167, 139, 250, 0.5);
+    border: 3px solid #ff3333;
+    outline: 2px solid rgba(255, 51, 51, 0.4);
 }
 
 .btn-hint {
