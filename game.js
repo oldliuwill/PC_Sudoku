@@ -561,7 +561,7 @@ class SudokuGame {
         if (won) {
             board.classList.add('victory');
             this.createConfetti();
-            this.showMessage('🎉', '恭喜完成！', '寶貝 我愛你', `用時：${this.formatTime(this.timer)}`);
+            this.showMessage('🎉', '恭喜完成！\n寶貝 我愛你', `用時：${this.formatTime(this.timer)}`);
         } else {
             this.showMessage('😢', '遊戲結束', '錯誤次數已達上限');
         }
@@ -585,12 +585,21 @@ class SudokuGame {
     }
 
     updateNumberCounts() {
-        // Count how many of each number are placed
+        // Count how many of each number are placed (包含錯誤的)
         const counts = Array(10).fill(0);
+        // Count how many of each number are correctly placed (只計算正確的)
+        const correctCounts = Array(10).fill(0);
+
         for (let i = 0; i < 9; i++) {
             for (let j = 0; j < 9; j++) {
                 const val = this.board[i][j].value;
-                if (val > 0) counts[val]++;
+                if (val > 0) {
+                    counts[val]++;
+                    // 檢查是否與答案相符
+                    if (val === this.solution[i][j]) {
+                        correctCounts[val]++;
+                    }
+                }
             }
         }
 
@@ -603,6 +612,12 @@ class SudokuGame {
                 btn.classList.remove('disabled');
             }
         });
+
+        // 當自動帶入的數字「全部正確」填滿 9 個時，才取消自動帶入功能
+        if (this.lastInputNumber !== null && this.lastInputNumber > 0 && correctCounts[this.lastInputNumber] >= 9) {
+            this.lastInputNumber = null;
+            this.updateAutoFillHighlight();
+        }
     }
 
     startTimer() {
