@@ -74,12 +74,43 @@ class SudokuGame {
         }
 
         if (this.gameMode === 'killer') {
-            // 殺手數獨：生成籠子，所有格子都是空的
+            // 殺手數獨：生成籠子
             this.generateCages();
+
+            // 根據難度決定要保留多少數字提示
+            const killerHints = {
+                easy: 12,      // 簡單：保留 12 個數字
+                medium: 6,     // 中等：保留 6 個數字
+                hard: 0        // 困難：不保留數字
+            };
+            const hintsToKeep = killerHints[this.difficulty];
+
+            // 先將所有格子設為空
             for (let i = 0; i < 9; i++) {
                 for (let j = 0; j < 9; j++) {
                     this.board[i][j].value = 0;
                     this.board[i][j].fixed = false;
+                }
+            }
+
+            // 如果需要保留提示數字
+            if (hintsToKeep > 0) {
+                // 收集所有位置並隨機排序
+                const positions = [];
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        positions.push([i, j]);
+                    }
+                }
+                this.shuffleArray(positions);
+
+                // 保留指定數量的數字作為提示
+                let kept = 0;
+                for (const [row, col] of positions) {
+                    if (kept >= hintsToKeep) break;
+                    this.board[row][col].value = this.solution[row][col];
+                    this.board[row][col].fixed = true;
+                    kept++;
                 }
             }
         } else {
@@ -309,7 +340,16 @@ class SudokuGame {
 
                 if (cellData.fixed) {
                     cell.classList.add('fixed');
-                    cell.textContent = cellData.value;
+                    // 保留籠子總和標籤（殺手模式）
+                    const existingSum = cell.querySelector('.cage-sum');
+                    if (existingSum) {
+                        const valueSpan = document.createElement('span');
+                        valueSpan.className = 'cell-value';
+                        valueSpan.textContent = cellData.value;
+                        cell.appendChild(valueSpan);
+                    } else {
+                        cell.textContent = cellData.value;
+                    }
                 } else if (cellData.value !== 0) {
                     // 保留籠子總和標籤
                     const existingSum = cell.querySelector('.cage-sum');
