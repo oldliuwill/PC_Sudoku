@@ -372,16 +372,17 @@ class SudokuGame {
         }
 
         // 點擊有數字的格子時，等同於按下該數字按鍵（只在一般模式下）
+        // 規則：點選有數字的格子 = 選擇該數字作為自動帶入數字
+        // 再點一次相同數字的格子 = 關閉自動帶入模式
         if (this.gameMode !== 'killer' && cellData.value !== 0) {
-            const isSameCell = previousCell && previousCell.row === row && previousCell.col === col;
-            const isJustFilled = isSameCell && cellData.value === this.lastInputNumber;
-
-            // 如果是剛填入數字後的內部呼叫（格子值等於 lastInputNumber），不切換
-            // 如果是用戶真的再按同一格（格子值不等於 lastInputNumber 或是不同數字），執行切換
-            if (!isJustFilled) {
+            // 檢查是否是從 inputNumber 呼叫過來的（剛填入數字）
+            // 使用 flag 來區分用戶點擊 vs 內部呼叫
+            if (!this._internalSelectCall) {
                 if (this.lastInputNumber === cellData.value) {
+                    // 如果點擊的格子數字和當前選擇的數字相同，則關閉自動帶入
                     this.lastInputNumber = null;
                 } else {
+                    // 否則選擇該格子的數字作為自動帶入數字
                     this.lastInputNumber = cellData.value;
                 }
                 this.updateAutoFillHighlight();
@@ -498,7 +499,9 @@ class SudokuGame {
 
         this.renderBoard();
         this.updateAutoFillHighlight(); // 更新放大效果
+        this._internalSelectCall = true; // 標記這是內部呼叫，不要觸發切換邏輯
         this.selectCell(row, col);
+        this._internalSelectCall = false;
     }
 
     updateAutoFillHighlight() {
