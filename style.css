@@ -236,6 +236,13 @@ body::before {
     background: var(--same-number-color);
 }
 
+/* 自動帶入時，相同數字放大顯示 */
+.sudoku-cell.auto-fill-enlarged {
+    font-size: 1.95rem;
+    font-weight: 800;
+    transition: font-size 0.2s ease;
+}
+
 .sudoku-cell.error {
     color: var(--error-color);
     animation: shake 0.3s ease;

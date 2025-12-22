@@ -371,6 +371,23 @@ class SudokuGame {
             return; // inputNumber 會重新呼叫 selectCell，所以這裡直接返回
         }
 
+        // 點擊有數字的格子時，等同於按下該數字按鍵（只在一般模式下）
+        if (this.gameMode !== 'killer' && cellData.value !== 0) {
+            const isSameCell = previousCell && previousCell.row === row && previousCell.col === col;
+            const isJustFilled = isSameCell && cellData.value === this.lastInputNumber;
+
+            // 如果是剛填入數字後的內部呼叫（格子值等於 lastInputNumber），不切換
+            // 如果是用戶真的再按同一格（格子值不等於 lastInputNumber 或是不同數字），執行切換
+            if (!isJustFilled) {
+                if (this.lastInputNumber === cellData.value) {
+                    this.lastInputNumber = null;
+                } else {
+                    this.lastInputNumber = cellData.value;
+                }
+                this.updateAutoFillHighlight();
+            }
+        }
+
         const selectedValue = this.board[row][col].value;
 
         // Highlight related cells
@@ -406,6 +423,27 @@ class SudokuGame {
         const { row, col } = this.selectedCell;
         const cellData = this.board[row][col];
 
+        // 即使選到固定格子，也允許切換自動帶入功能（只在一般模式下）
+        if (this.gameMode !== 'killer' && num !== 0) {
+            // 如果再次點擊已經啟用的自動帶入數字
+            if (this.lastInputNumber === num) {
+                // 只有在「格子值已經等於該數字」或「固定格子」時才取消自動帶入
+                if (cellData.value === num || cellData.fixed) {
+                    this.lastInputNumber = null;
+                    this.updateAutoFillHighlight();
+                    if (cellData.fixed) return;
+                    return; // 格子已有相同數字，不需要再填
+                }
+                // 如果是空格子或不同數字，保持自動帶入，繼續執行填入邏輯
+            } else {
+                // 切換到新的自動帶入數字
+                this.lastInputNumber = num;
+                this.updateAutoFillHighlight();
+                if (cellData.fixed) return; // 固定格子不進行其他操作
+            }
+        }
+
+        // 固定格子不能填入數字
         if (cellData.fixed) return;
 
         if (this.notesMode && num !== 0) {
@@ -425,15 +463,11 @@ class SudokuGame {
                 this.lastInputNumber = null; // 清除時重置上次輸入的數字
                 this.updateAutoFillHighlight();
             } else {
-                // 如果再次點擊相同數字，且當前格子已經是該數字，則關閉自動帶入
-                if (this.lastInputNumber === num && cellData.value === num) {
-                    this.lastInputNumber = null;
-                    this.updateAutoFillHighlight();
+                // 如果再次輸入已經填入的相同數字，直接返回（不算錯誤）
+                if (cellData.value === num) {
                     return;
                 }
 
-                this.lastInputNumber = num; // 記錄輸入的數字
-                this.updateAutoFillHighlight();
                 this.notes[row][col].clear();
 
                 if (num !== this.solution[row][col]) {
@@ -463,6 +497,7 @@ class SudokuGame {
         }
 
         this.renderBoard();
+        this.updateAutoFillHighlight(); // 更新放大效果
         this.selectCell(row, col);
     }
 
@@ -472,15 +507,29 @@ class SudokuGame {
             btn.classList.remove('auto-fill-active');
         });
 
+        // 移除所有格子的放大效果
+        document.querySelectorAll('.sudoku-cell').forEach(cell => {
+            cell.classList.remove('auto-fill-enlarged');
+        });
+
         // 殺手模式不顯示自動帶入高亮
         if (this.gameMode === 'killer') return;
 
-        // 如果有記憶的數字，高亮對應按鈕
+        // 如果有記憶的數字，高亮對應按鈕並放大相同數字的格子
         if (this.lastInputNumber !== null && this.lastInputNumber !== 0) {
             const activeBtn = document.querySelector(`.num-btn[data-num="${this.lastInputNumber}"]`);
             if (activeBtn) {
                 activeBtn.classList.add('auto-fill-active');
             }
+
+            // 放大所有包含該數字的格子
+            document.querySelectorAll('.sudoku-cell').forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                if (this.board[r][c].value === this.lastInputNumber) {
+                    cell.classList.add('auto-fill-enlarged');
+                }
+            });
         }
     }
 
@@ -603,10 +652,10 @@ class SudokuGame {
             }
         }
 
-        // Disable buttons for numbers that are complete (9 of them)
+        // Disable buttons for numbers that are complete (正確填入 9 個)
         document.querySelectorAll('.num-btn[data-num]').forEach(btn => {
             const num = parseInt(btn.dataset.num);
-            if (num > 0 && counts[num] >= 9) {
+            if (num > 0 && correctCounts[num] >= 9) {
                 btn.classList.add('disabled');
             } else {
                 btn.classList.remove('disabled');
