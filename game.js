@@ -268,8 +268,17 @@ class SudokuGame {
                 cellData.isError = false;
                 this.notes[row][col].clear();
                 this.lastInputNumber = null; // 清除時重置上次輸入的數字
+                this.updateAutoFillHighlight();
             } else {
+                // 如果再次點擊相同數字，且當前格子已經是該數字，則關閉自動帶入
+                if (this.lastInputNumber === num && cellData.value === num) {
+                    this.lastInputNumber = null;
+                    this.updateAutoFillHighlight();
+                    return;
+                }
+
                 this.lastInputNumber = num; // 記錄輸入的數字
+                this.updateAutoFillHighlight();
                 this.notes[row][col].clear();
 
                 if (num !== this.solution[row][col]) {
@@ -300,6 +309,21 @@ class SudokuGame {
 
         this.renderBoard();
         this.selectCell(row, col);
+    }
+
+    updateAutoFillHighlight() {
+        // 移除所有數字按鈕的自動帶入高亮
+        document.querySelectorAll('.num-btn[data-num]').forEach(btn => {
+            btn.classList.remove('auto-fill-active');
+        });
+
+        // 如果有記憶的數字，高亮對應按鈕
+        if (this.lastInputNumber !== null && this.lastInputNumber !== 0) {
+            const activeBtn = document.querySelector(`.num-btn[data-num="${this.lastInputNumber}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('auto-fill-active');
+            }
+        }
     }
 
     removeNoteFromRelatedCells(row, col, num) {

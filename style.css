@@ -346,6 +346,24 @@ body::before {
     transform: none;
 }
 
+.num-btn.auto-fill-active {
+    background: linear-gradient(145deg, #a8edea, #5fd9d1);
+    color: #006666;
+    box-shadow:
+        0 4px 15px rgba(95, 217, 209, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 0 0 3px rgba(95, 217, 209, 0.3);
+    transform: scale(1.05);
+}
+
+.num-btn.auto-fill-active:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow:
+        0 6px 20px rgba(95, 217, 209, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 0 0 3px rgba(95, 217, 209, 0.4);
+}
+
 /* Game controls */
 .game-controls {
     display: flex;
