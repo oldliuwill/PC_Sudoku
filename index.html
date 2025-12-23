@@ -15,15 +15,40 @@
 <body>
     <div class="game-container">
         <header class="game-header">
-            <h1>🧩 PC's Sudoku 🧩</h1>
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <span class="stat-label">時間</span>
-                    <span class="stat-value" id="timer">00:00</span>
+            <div class="title-row">
+                <h1>🧩 PC's Sudoku 🧩</h1>
+                <button class="help-btn" id="help-btn" title="遊戲說明">❓</button>
+            </div>
+            <div class="help-panel" id="help-panel">
+                <div class="help-content">
+                    <h3>📖 遊戲說明</h3>
+                    <div class="help-section">
+                        <strong>🔢 數獨</strong>：填入 1-9 使每行、每列、每個 3×3 格子都不重複
+                    </div>
+                    <div class="help-section">
+                        <strong>🎯 殺手數獨</strong>：數獨規則 + 虛線籠子內數字總和等於提示數
+                    </div>
+                    <div class="help-section">
+                        <strong>🎮 2048</strong>：用方向鍵移動方塊，相同數字合併，目標達到 2048
+                    </div>
+                    <div class="help-section">
+                        <strong>🔴🔵 Oh h1</strong>：點擊切換紅/藍，無連續3同色，每行列紅藍相等
+                    </div>
+                    <div class="help-section">
+                        <strong>🖼️ Nonogram</strong>：根據數字提示填滿格子，完成隱藏圖案
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">錯誤</span>
-                    <span class="stat-value" id="mistakes">0/3</span>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-item difficulty-selector">
+                    <span class="stat-label">玩法</span>
+                    <select id="game-mode" class="difficulty-select">
+                        <option value="normal" selected>數獨</option>
+                        <option value="killer">殺手數獨</option>
+                        <option value="2048">2048</option>
+                        <option value="ohh1">Oh h1</option>
+                        <option value="nonogram">Nonogram</option>
+                    </select>
                 </div>
                 <div class="stat-item difficulty-selector">
                     <span class="stat-label">難度</span>
@@ -33,12 +58,13 @@
                         <option value="hard">困難</option>
                     </select>
                 </div>
-                <div class="stat-item difficulty-selector">
-                    <span class="stat-label">玩法</span>
-                    <select id="game-mode" class="difficulty-select">
-                        <option value="normal" selected>一般</option>
-                        <option value="killer">殺手</option>
-                    </select>
+                <div class="stat-item">
+                    <span class="stat-label" id="mistakes-label">錯誤</span>
+                    <span class="stat-value" id="mistakes">0/3</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">時間</span>
+                    <span class="stat-value" id="timer">00:00</span>
                 </div>
             </div>
         </header>

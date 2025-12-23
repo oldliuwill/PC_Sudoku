@@ -1,4 +1,438 @@
+// 2048 遊戲類別
+class Game2048 {
+    constructor() {
+        this.grid = Array(4).fill(null).map(() => Array(4).fill(0));
+        this.score = 0;
+        this.bestScore = parseInt(localStorage.getItem('best2048Score') || '0');
+        this.gameOver = false;
+        this.won = false;
+        this.addRandomTile();
+        this.addRandomTile();
+    }
+
+    addRandomTile() {
+        const emptyCells = [];
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                if (this.grid[i][j] === 0) {
+                    emptyCells.push({ row: i, col: j });
+                }
+            }
+        }
+        if (emptyCells.length > 0) {
+            const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            this.grid[row][col] = Math.random() < 0.9 ? 2 : 4;
+        }
+    }
+
+    move(direction) {
+        let moved = false;
+        const oldGrid = JSON.stringify(this.grid);
+
+        if (direction === 'up') {
+            for (let col = 0; col < 4; col++) {
+                const column = this.grid.map(row => row[col]).filter(val => val !== 0);
+                const merged = this.mergeTiles(column);
+                for (let row = 0; row < 4; row++) {
+                    this.grid[row][col] = merged[row] || 0;
+                }
+            }
+        } else if (direction === 'down') {
+            for (let col = 0; col < 4; col++) {
+                const column = this.grid.map(row => row[col]).filter(val => val !== 0).reverse();
+                const merged = this.mergeTiles(column).reverse();
+                // 從底部開始填充
+                while (merged.length < 4) merged.unshift(0);
+                for (let row = 0; row < 4; row++) {
+                    this.grid[row][col] = merged[row];
+                }
+            }
+        } else if (direction === 'left') {
+            for (let row = 0; row < 4; row++) {
+                const line = this.grid[row].filter(val => val !== 0);
+                this.grid[row] = this.mergeTiles(line);
+                while (this.grid[row].length < 4) this.grid[row].push(0);
+            }
+        } else if (direction === 'right') {
+            for (let row = 0; row < 4; row++) {
+                const line = this.grid[row].filter(val => val !== 0).reverse();
+                const merged = this.mergeTiles(line).reverse();
+                this.grid[row] = merged;
+                while (this.grid[row].length < 4) this.grid[row].unshift(0);
+            }
+        }
+
+        moved = oldGrid !== JSON.stringify(this.grid);
+
+        if (moved) {
+            this.addRandomTile();
+            if (this.score > this.bestScore) {
+                this.bestScore = this.score;
+                localStorage.setItem('best2048Score', this.bestScore.toString());
+            }
+            this.checkGameStatus();
+        }
+
+        return moved;
+    }
+
+    mergeTiles(line) {
+        const result = [];
+        let i = 0;
+        while (i < line.length) {
+            if (i < line.length - 1 && line[i] === line[i + 1]) {
+                const value = line[i] * 2;
+                result.push(value);
+                this.score += value;
+                if (value === 2048) this.won = true;
+                i += 2;
+            } else {
+                result.push(line[i]);
+                i++;
+            }
+        }
+        return result;
+    }
+
+    checkGameStatus() {
+        // Check if game is over
+        if (this.canMove()) {
+            this.gameOver = false;
+        } else {
+            this.gameOver = true;
+        }
+    }
+
+    canMove() {
+        // Check for empty cells
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                if (this.grid[i][j] === 0) return true;
+            }
+        }
+
+        // Check for possible merges
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const current = this.grid[i][j];
+                if (j < 3 && current === this.grid[i][j + 1]) return true;
+                if (i < 3 && current === this.grid[i + 1][j]) return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+// Oh h1 遊戲類別 - 二進制邏輯益智遊戲
+class GameOhh1 {
+    constructor(size = 6) {
+        this.size = size;
+        this.grid = Array(size).fill(null).map(() => Array(size).fill(0));
+        this.fixed = Array(size).fill(null).map(() => Array(size).fill(false));
+        this.gameOver = false;
+        this.generatePuzzle();
+    }
+
+    generatePuzzle() {
+        // 生成完整解答
+        this.generateSolution();
+
+        // 移除部分格子作為謎題
+        const totalCells = this.size * this.size;
+        const cellsToReveal = Math.floor(totalCells * 0.35); // 約 35% 預填
+
+        const positions = [];
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                positions.push([i, j]);
+            }
+        }
+
+        // 隨機打亂
+        for (let i = positions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+
+        // 保留部分格子為固定
+        for (let i = 0; i < cellsToReveal; i++) {
+            const [row, col] = positions[i];
+            this.fixed[row][col] = true;
+        }
+
+        // 清空非固定格子
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (!this.fixed[i][j]) {
+                    this.grid[i][j] = 0;
+                }
+            }
+        }
+    }
+
+    generateSolution() {
+        // 簡化版：使用回溯法生成有效解答
+        this.grid = Array(this.size).fill(null).map(() => Array(this.size).fill(0));
+        this.backtrack(0, 0);
+    }
+
+    backtrack(row, col) {
+        if (row === this.size) return true;
+
+        const nextRow = col === this.size - 1 ? row + 1 : row;
+        const nextCol = col === this.size - 1 ? 0 : col + 1;
+
+        const colors = [1, 2];
+        for (let i = colors.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [colors[i], colors[j]] = [colors[j], colors[i]];
+        }
+
+        for (const color of colors) {
+            this.grid[row][col] = color;
+
+            if (this.isValidPlacement(row, col) && this.backtrack(nextRow, nextCol)) {
+                return true;
+            }
+
+            this.grid[row][col] = 0;
+        }
+
+        return false;
+    }
+
+    isValidPlacement(row, col) {
+        const color = this.grid[row][col];
+
+        // 檢查橫向連續三個
+        if (col >= 2) {
+            if (this.grid[row][col] === this.grid[row][col - 1] &&
+                this.grid[row][col] === this.grid[row][col - 2]) {
+                return false;
+            }
+        }
+        if (col >= 1 && col < this.size - 1) {
+            if (this.grid[row][col] === this.grid[row][col - 1] &&
+                this.grid[row][col] === this.grid[row][col + 1]) {
+                return false;
+            }
+        }
+
+        // 檢查縱向連續三個
+        if (row >= 2) {
+            if (this.grid[row][col] === this.grid[row - 1][col] &&
+                this.grid[row][col] === this.grid[row - 2][col]) {
+                return false;
+            }
+        }
+        if (row >= 1 && row < this.size - 1) {
+            if (this.grid[row][col] === this.grid[row - 1][col] &&
+                this.grid[row][col] === this.grid[row + 1][col]) {
+                return false;
+            }
+        }
+
+        // 檢查該列顏色數量不超標
+        let count1 = 0, count2 = 0;
+        for (let c = 0; c < this.size; c++) {
+            if (this.grid[row][c] === 1) count1++;
+            if (this.grid[row][c] === 2) count2++;
+        }
+        if (count1 > this.size / 2 || count2 > this.size / 2) return false;
+
+        // 檢查該欄顏色數量不超標
+        count1 = 0;
+        count2 = 0;
+        for (let r = 0; r < this.size; r++) {
+            if (this.grid[r][col] === 1) count1++;
+            if (this.grid[r][col] === 2) count2++;
+        }
+        if (count1 > this.size / 2 || count2 > this.size / 2) return false;
+
+        return true;
+    }
+
+    toggleCell(row, col) {
+        if (this.fixed[row][col] || this.gameOver) return false;
+
+        // 循環：0 → 1 → 2 → 0
+        this.grid[row][col] = (this.grid[row][col] + 1) % 3;
+
+        return true;
+    }
+
+    checkWin() {
+        // 檢查是否所有格子都填滿
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.grid[i][j] === 0) return false;
+            }
+        }
+
+        // 檢查所有規則
+        return this.validateAll();
+    }
+
+    validateAll() {
+        // 檢查無連續三個
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size - 2; j++) {
+                // 橫向
+                if (this.grid[i][j] === this.grid[i][j + 1] &&
+                    this.grid[i][j] === this.grid[i][j + 2] &&
+                    this.grid[i][j] !== 0) {
+                    return false;
+                }
+                // 縱向
+                if (this.grid[j][i] === this.grid[j + 1][i] &&
+                    this.grid[j][i] === this.grid[j + 2][i] &&
+                    this.grid[j][i] !== 0) {
+                    return false;
+                }
+            }
+        }
+
+        // 檢查每列每欄顏色數量相等
+        for (let i = 0; i < this.size; i++) {
+            let rowCount1 = 0, rowCount2 = 0;
+            let colCount1 = 0, colCount2 = 0;
+
+            for (let j = 0; j < this.size; j++) {
+                if (this.grid[i][j] === 1) rowCount1++;
+                if (this.grid[i][j] === 2) rowCount2++;
+                if (this.grid[j][i] === 1) colCount1++;
+                if (this.grid[j][i] === 2) colCount2++;
+            }
+
+            if (rowCount1 !== rowCount2) return false;
+            if (colCount1 !== colCount2) return false;
+        }
+
+        return true;
+    }
+}
+
+// Nonogram 遊戲類別 - 數織/繪圖方塊益智遊戲
+class GameNonogram {
+    constructor(size = 5) {
+        this.size = size;
+        this.solution = Array(size).fill(null).map(() => Array(size).fill(0));
+        this.grid = Array(size).fill(null).map(() => Array(size).fill(0));
+        this.rowHints = [];
+        this.colHints = [];
+        this.gameOver = false;
+        this.generatePuzzle();
+    }
+
+    generatePuzzle() {
+        // 生成隨機圖案
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                // 約50%機率填滿，但確保不會全空或全滿
+                this.solution[i][j] = Math.random() < 0.5 ? 1 : 0;
+            }
+        }
+
+        // 確保至少有一些填滿的格子
+        let filledCount = 0;
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.solution[i][j] === 1) filledCount++;
+            }
+        }
+
+        // 如果太少或太多，重新生成
+        const minFilled = Math.floor(this.size * this.size * 0.2);
+        const maxFilled = Math.floor(this.size * this.size * 0.8);
+        if (filledCount < minFilled || filledCount > maxFilled) {
+            return this.generatePuzzle();
+        }
+
+        // 計算提示數字
+        this.calculateAllHints();
+    }
+
+    calculateAllHints() {
+        // 計算每行的提示
+        this.rowHints = [];
+        for (let i = 0; i < this.size; i++) {
+            this.rowHints.push(this.calculateHints(this.solution[i]));
+        }
+
+        // 計算每列的提示
+        this.colHints = [];
+        for (let j = 0; j < this.size; j++) {
+            const col = [];
+            for (let i = 0; i < this.size; i++) {
+                col.push(this.solution[i][j]);
+            }
+            this.colHints.push(this.calculateHints(col));
+        }
+    }
+
+    calculateHints(line) {
+        const hints = [];
+        let count = 0;
+
+        for (let i = 0; i < line.length; i++) {
+            if (line[i] === 1) {
+                count++;
+            } else if (count > 0) {
+                hints.push(count);
+                count = 0;
+            }
+        }
+
+        if (count > 0) {
+            hints.push(count);
+        }
+
+        return hints.length > 0 ? hints : [0];
+    }
+
+    toggleCell(row, col) {
+        if (this.gameOver) return false;
+
+        // 循環：0（空）→ 1（填滿）→ 2（標記X）→ 0
+        this.grid[row][col] = (this.grid[row][col] + 1) % 3;
+
+        return true;
+    }
+
+    checkWin() {
+        // 改為驗證玩家答案是否符合所有行列提示（支援多種正確解法）
+
+        // 檢查每行提示
+        for (let i = 0; i < this.size; i++) {
+            const row = [];
+            for (let j = 0; j < this.size; j++) {
+                row.push(this.grid[i][j] === 1 ? 1 : 0);
+            }
+            const playerHints = this.calculateHints(row);
+            if (JSON.stringify(playerHints) !== JSON.stringify(this.rowHints[i])) {
+                return false;
+            }
+        }
+
+        // 檢查每列提示
+        for (let j = 0; j < this.size; j++) {
+            const col = [];
+            for (let i = 0; i < this.size; i++) {
+                col.push(this.grid[i][j] === 1 ? 1 : 0);
+            }
+            const playerHints = this.calculateHints(col);
+            if (JSON.stringify(playerHints) !== JSON.stringify(this.colHints[j])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 // 甜心數獨 - Cute Sudoku Game
+
 class SudokuGame {
     constructor() {
         this.board = [];
@@ -13,9 +447,12 @@ class SudokuGame {
         this.timerInterval = null;
         this.gameOver = false;
         this.difficulty = 'medium';
-        this.gameMode = 'normal'; // 'normal' 或 'killer'
+        this.gameMode = 'normal'; // 'normal' 或 'killer' 或 '2048' 或 'ohh1' 或 'nonogram'
         this.cages = []; // 殺手數獨的籠子
         this.cellToCage = []; // 每個格子對應的籠子索引
+        this.game2048 = null; // 2048 遊戲實例
+        this.gameOhh1 = null; // Oh h1 遊戲實例
+        this.gameNonogram = null; // Nonogram 遊戲實例
         this.difficultySettings = {
             easy: 38,      // 38 cells revealed
             medium: 30,    // 30 cells revealed
@@ -34,6 +471,65 @@ class SudokuGame {
     newGame() {
         this.difficulty = document.getElementById('difficulty').value;
         this.gameMode = document.getElementById('game-mode').value;
+
+        // 2048 模式
+        if (this.gameMode === '2048') {
+            this.game2048 = new Game2048();
+            this.gameOhh1 = null;
+            this.gameOver = false;
+            this.timer = 0;
+            document.getElementById('mistakes-label').textContent = '分數';
+            this.hideGameControls(); // 隱藏數獨專用控制項
+            this.updateTimerDisplay();
+            this.startTimer();
+            this.hideMessage();
+            this.render2048();
+            return;
+        }
+
+        // Oh h1 模式
+        if (this.gameMode === 'ohh1') {
+            const size = this.difficulty === 'easy' ? 6 :
+                this.difficulty === 'medium' ? 8 : 10;
+            this.gameOhh1 = new GameOhh1(size);
+            this.game2048 = null;
+            this.gameOver = false;
+            this.timer = 0;
+            document.getElementById('mistakes-label').textContent = '狀態';
+            document.getElementById('mistakes').textContent = '進行中';
+            this.hideGameControls(); // 隱藏數獨專用控制項
+            this.updateTimerDisplay();
+            this.startTimer();
+            this.hideMessage();
+            this.renderOhh1();
+            return;
+        }
+
+        // Nonogram 模式
+        if (this.gameMode === 'nonogram') {
+            const size = this.difficulty === 'easy' ? 5 :
+                this.difficulty === 'medium' ? 10 : 15;
+            this.gameNonogram = new GameNonogram(size);
+            this.game2048 = null;
+            this.gameOhh1 = null;
+            this.gameOver = false;
+            this.timer = 0;
+            document.getElementById('mistakes-label').textContent = '狀態';
+            document.getElementById('mistakes').textContent = '進行中';
+            this.hideGameControls(); // 隱藏數獨專用控制項
+            this.updateTimerDisplay();
+            this.startTimer();
+            this.hideMessage();
+            this.renderNonogram();
+            return;
+        }
+
+        // 數獨/殺手數獨模式
+        this.game2048 = null;
+        this.gameOhh1 = null;
+        this.gameNonogram = null;
+        document.getElementById('mistakes-label').textContent = '錯誤';
+        this.showGameControls(); // 顯示數獨專用控制項
         this.board = Array(9).fill(null).map(() => Array(9).fill(0));
         this.notes = Array(9).fill(null).map(() =>
             Array(9).fill(null).map(() => new Set())
@@ -300,6 +796,9 @@ class SudokuGame {
     renderBoard() {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram'); // 移除所有模式的樣式
+        // 移除所有格子大小類別
+        boardElement.classList.remove('grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
 
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 9; col++) {
@@ -385,6 +884,173 @@ class SudokuGame {
         }
 
         this.updateNumberCounts();
+    }
+
+    render2048() {
+        if (!this.game2048) return;
+
+        const boardElement = document.getElementById('sudoku-board');
+        boardElement.innerHTML = '';
+        boardElement.classList.remove('mode-ohh1', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15'); // 移除其他模式的樣式
+        boardElement.classList.add('mode-2048');
+
+        // 更新分數顯示
+        document.getElementById('mistakes').textContent = `分數: ${this.game2048.score}`;
+
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'sudoku-cell tile-2048';
+                const value = this.game2048.grid[row][col];
+
+                if (value !== 0) {
+                    cell.textContent = value;
+                    cell.classList.add(`tile-${value}`);
+                }
+
+                boardElement.appendChild(cell);
+            }
+        }
+
+        // 檢查遊戲結束
+        if (this.game2048.gameOver) {
+            this.showMessage('😢', '遊戲結束', `最終分數：${this.game2048.score}`);
+            this.stopTimer();
+        } else if (this.game2048.won) {
+            this.showMessage('🎉', '恭喜寶貝贏得 2048！', `分數：${this.game2048.score}`);
+            this.game2048.won = false; // 允許繼續玩
+        }
+    }
+
+    handle2048Move(direction) {
+        if (!this.game2048 || this.game2048.gameOver) return;
+
+        const moved = this.game2048.move(direction);
+        if (moved) {
+            this.render2048();
+        } else {
+            // 如果無法移動，檢查是否遊戲結束
+            this.game2048.checkGameStatus();
+            if (this.game2048.gameOver) {
+                this.render2048(); // 重新渲染以顯示遊戲結束訊息
+            }
+        }
+    }
+
+    renderOhh1() {
+        if (!this.gameOhh1) return;
+
+        const boardElement = document.getElementById('sudoku-board');
+        boardElement.innerHTML = '';
+        boardElement.classList.remove('mode-2048', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
+        boardElement.classList.add('mode-ohh1', `grid-${this.gameOhh1.size}`);
+
+        for (let row = 0; row < this.gameOhh1.size; row++) {
+            for (let col = 0; col < this.gameOhh1.size; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'sudoku-cell ohh1-cell';
+                const value = this.gameOhh1.grid[row][col];
+
+                if (value === 0) {
+                    cell.classList.add('ohh1-empty');
+                } else if (value === 1) {
+                    cell.classList.add('ohh1-red');
+                } else {
+                    cell.classList.add('ohh1-blue');
+                }
+
+                if (this.gameOhh1.fixed[row][col]) {
+                    cell.classList.add('ohh1-fixed');
+                }
+
+                cell.addEventListener('click', () => {
+                    if (this.gameOhh1.toggleCell(row, col)) {
+                        this.renderOhh1();
+
+                        if (this.gameOhh1.checkWin()) {
+                            this.gameOhh1.gameOver = true;
+                            this.showMessage('🎉', '恭喜寶貝完成！', '你成功解開了 Oh h1 謎題！');
+                            document.getElementById('mistakes').textContent = '完成';
+                            this.stopTimer();
+                        }
+                    }
+                });
+
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    renderNonogram() {
+        if (!this.gameNonogram) return;
+
+        const boardElement = document.getElementById('sudoku-board');
+        boardElement.innerHTML = '';
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
+        boardElement.classList.add('mode-nonogram', `grid-${this.gameNonogram.size}`);
+
+        // 渲染格子和提示數字
+        // 第一行：左上角佔位 + 列提示
+        const corner = document.createElement('div');
+        corner.className = 'nonogram-corner';
+        boardElement.appendChild(corner);
+
+        for (let col = 0; col < this.gameNonogram.size; col++) {
+            const hintCell = document.createElement('div');
+            hintCell.className = 'nonogram-hint nonogram-hint-col';
+            // 每個數字用 span 包裹，讓 CSS 可以用 flex-direction: column-reverse 排列
+            this.gameNonogram.colHints[col].forEach(num => {
+                const span = document.createElement('span');
+                span.textContent = num;
+                hintCell.appendChild(span);
+            });
+            boardElement.appendChild(hintCell);
+        }
+
+        // 渲染行（含行提示和格子）
+        for (let row = 0; row < this.gameNonogram.size; row++) {
+            // 行提示（左側）
+            const hintCell = document.createElement('div');
+            hintCell.className = 'nonogram-hint nonogram-hint-row';
+            hintCell.textContent = this.gameNonogram.rowHints[row].join(' ');
+            boardElement.appendChild(hintCell);
+
+            // 格子
+            for (let col = 0; col < this.gameNonogram.size; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'sudoku-cell nonogram-cell';
+                const value = this.gameNonogram.grid[row][col];
+
+                if (value === 0) {
+                    cell.classList.add('nonogram-empty');
+                } else if (value === 1) {
+                    cell.classList.add('nonogram-filled');
+                } else {
+                    cell.classList.add('nonogram-marked');
+                    cell.textContent = 'X';
+                }
+
+                cell.addEventListener('click', () => {
+                    if (this.gameNonogram.toggleCell(row, col)) {
+                        this.renderNonogram();
+
+                        // 調試：顯示當前狀態
+                        console.log('玩家格子:', JSON.stringify(this.gameNonogram.grid));
+                        console.log('正確答案:', JSON.stringify(this.gameNonogram.solution));
+                        console.log('checkWin 結果:', this.gameNonogram.checkWin());
+
+                        if (this.gameNonogram.checkWin()) {
+                            this.gameNonogram.gameOver = true;
+                            this.showMessage('🎉', '恭喜寶貝完成！', '您成功解開了 Nonogram 謎題！');
+                            document.getElementById('mistakes').textContent = '完成';
+                            this.stopTimer();
+                        }
+                    }
+                });
+
+                boardElement.appendChild(cell);
+            }
+        }
     }
 
     selectCell(row, col) {
@@ -672,6 +1338,22 @@ class SudokuGame {
         document.getElementById('sudoku-board').classList.remove('victory');
     }
 
+    hideGameControls() {
+        // 隱藏數獨專用的控制項（數字鍵盤和按鈕）
+        const numberPad = document.querySelector('.number-pad');
+        const gameControls = document.querySelector('.game-controls');
+        if (numberPad) numberPad.style.display = 'none';
+        if (gameControls) gameControls.style.display = 'none';
+    }
+
+    showGameControls() {
+        // 顯示數獨專用的控制項
+        const numberPad = document.querySelector('.number-pad');
+        const gameControls = document.querySelector('.game-controls');
+        if (numberPad) numberPad.style.display = 'grid';
+        if (gameControls) gameControls.style.display = 'flex';
+    }
+
     updateMistakes() {
         document.getElementById('mistakes').textContent = `${this.mistakes}/${this.maxMistakes}`;
     }
@@ -855,8 +1537,37 @@ class SudokuGame {
         // Game mode change
         document.getElementById('game-mode').addEventListener('change', () => this.newGame());
 
+        // Help button toggle
+        document.getElementById('help-btn').addEventListener('click', () => {
+            const panel = document.getElementById('help-panel');
+            const btn = document.getElementById('help-btn');
+            panel.classList.toggle('show');
+            btn.classList.toggle('active');
+        });
+
         // Keyboard support
         document.addEventListener('keydown', (e) => {
+            // 2048 模式：方向鍵控制
+            if (this.gameMode === '2048') {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    this.handle2048Move('up');
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.handle2048Move('down');
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    this.handle2048Move('left');
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    this.handle2048Move('right');
+                } else if (e.key === 'r' || e.key === 'R') {
+                    this.newGame();
+                }
+                return;
+            }
+
+            // 數獨模式的鍵盤控制
             if (e.key >= '1' && e.key <= '9') {
                 this.inputNumber(parseInt(e.key));
             } else if (e.key === '0' || e.key === 'Backspace' || e.key === 'Delete') {
@@ -879,6 +1590,38 @@ class SudokuGame {
             } else if (e.key === 'ArrowRight' && this.selectedCell) {
                 const newCol = Math.min(8, this.selectedCell.col + 1);
                 this.selectCell(this.selectedCell.row, newCol);
+            }
+        });
+
+        // 觸控滑動支援（僅在 2048 模式啟用）
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.getElementById('sudoku-board').addEventListener('touchstart', (e) => {
+            if (this.gameMode !== '2048') return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.getElementById('sudoku-board').addEventListener('touchend', (e) => {
+            if (this.gameMode !== '2048') return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 30;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 水平滑動
+                if (Math.abs(deltaX) > minSwipeDistance) {
+                    this.handle2048Move(deltaX > 0 ? 'right' : 'left');
+                }
+            } else {
+                // 垂直滑動
+                if (Math.abs(deltaY) > minSwipeDistance) {
+                    this.handle2048Move(deltaY > 0 ? 'down' : 'up');
+                }
             }
         });
     }
