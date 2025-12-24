@@ -237,8 +237,8 @@ body::before {
 }
 
 .sudoku-cell {
-    width: 42px;
-    height: 42px;
+    width: 45px;
+    height: 45px;
     display: flex;
     justify-content: center;
     align-items: center;
