@@ -949,27 +949,64 @@ body::before {
 
 /* ===== 2048 遊戲樣式 ===== */
 
-/* 2048 模式的格子系統 (4x4) */
+/* 2048 模式基礎樣式（不設定網格，讓各難度類別控制） */
 .sudoku-board.mode-2048 {
-    grid-template-columns: repeat(4, 70px);
-    grid-template-rows: repeat(4, 70px);
-    gap: 10px;
-    padding: 15px;
+    width: auto;
+    justify-content: center;
+}
+
+/* 2048 模式的格子系統 - 不同難度大小 */
+.sudoku-board.mode-2048.grid-2048-4 {
+    grid-template-columns: repeat(4, 70px) !important;
+    grid-template-rows: repeat(4, 70px) !important;
+    gap: 8px;
+    padding: 12px;
+    width: auto;
+    justify-content: center;
+}
+
+.sudoku-board.mode-2048.grid-2048-5 {
+    grid-template-columns: repeat(5, 60px);
+    grid-template-rows: repeat(5, 60px);
+    gap: 8px;
+    padding: 12px;
+    width: auto;
+    justify-content: center;
+}
+
+.sudoku-board.mode-2048.grid-2048-6 {
+    grid-template-columns: repeat(6, 50px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 6px;
+    padding: 10px;
     width: auto;
     justify-content: center;
 }
 
 /* 2048 方塊基礎樣式 */
 .sudoku-board.mode-2048 .tile-2048 {
-    width: 70px;
-    height: 70px;
-    font-size: 2.0rem;
+    width: 100%;
+    height: 100%;
+    font-size: 1.8rem;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
     transition: all 0.15s ease;
+}
+
+/* 不同大小的字體調整 */
+.sudoku-board.mode-2048.grid-2048-4 .tile-2048 {
+    font-size: 1.5rem;
+}
+
+.sudoku-board.mode-2048.grid-2048-5 .tile-2048 {
+    font-size: 1.4rem;
+}
+
+.sudoku-board.mode-2048.grid-2048-6 .tile-2048 {
+    font-size: 1.2rem;
 }
 
 /* 空方塊 */
@@ -1068,29 +1105,38 @@ body::before {
 
 /* Oh h1 模式的格子系統 */
 .sudoku-board.mode-ohh1.grid-6 {
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(6, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(6, 45px);
+    grid-template-rows: repeat(6, 45px);
+    gap: 6px;
+    width: auto;
+    justify-content: center;
 }
 
 .sudoku-board.mode-ohh1.grid-8 {
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(8, 38px);
+    grid-template-rows: repeat(8, 38px);
+    gap: 5px;
+    width: auto;
+    justify-content: center;
 }
 
 .sudoku-board.mode-ohh1.grid-10 {
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(10, 32px);
+    grid-template-rows: repeat(10, 32px);
+    gap: 4px;
+    width: auto;
+    justify-content: center;
 }
 
-/* Oh h1 格子樣式 */
-.ohh1-cell {
+/* Oh h1 格子樣式 - 覆蓋 sudoku-cell 基礎樣式 */
+.sudoku-board.mode-ohh1 .ohh1-cell {
     cursor: pointer;
     border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
-    min-height: 40px;
+    aspect-ratio: 1 / 1;
+    width: auto;
+    height: auto;
 }
 
 .ohh1-cell:hover {
@@ -1197,12 +1243,12 @@ body::before {
 }
 
 /* 格子狀態 */
-.nonogram-empty {
-    background: white;
+.sudoku-board.mode-nonogram .nonogram-empty {
+    background: white !important;
 }
 
-.nonogram-filled {
-    background: #333;
+.sudoku-board.mode-nonogram .nonogram-filled {
+    background: #333 !important;
 }
 
 .nonogram-marked {

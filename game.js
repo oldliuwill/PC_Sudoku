@@ -1,9 +1,10 @@
 // 2048 遊戲類別
 class Game2048 {
-    constructor() {
-        this.grid = Array(4).fill(null).map(() => Array(4).fill(0));
+    constructor(size = 4) {
+        this.size = size;
+        this.grid = Array(size).fill(null).map(() => Array(size).fill(0));
         this.score = 0;
-        this.bestScore = parseInt(localStorage.getItem('best2048Score') || '0');
+        this.bestScore = parseInt(localStorage.getItem(`best2048Score_${size}`) || '0');
         this.gameOver = false;
         this.won = false;
         this.addRandomTile();
@@ -12,8 +13,8 @@ class Game2048 {
 
     addRandomTile() {
         const emptyCells = [];
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
                 if (this.grid[i][j] === 0) {
                     emptyCells.push({ row: i, col: j });
                 }
@@ -30,35 +31,35 @@ class Game2048 {
         const oldGrid = JSON.stringify(this.grid);
 
         if (direction === 'up') {
-            for (let col = 0; col < 4; col++) {
+            for (let col = 0; col < this.size; col++) {
                 const column = this.grid.map(row => row[col]).filter(val => val !== 0);
                 const merged = this.mergeTiles(column);
-                for (let row = 0; row < 4; row++) {
+                for (let row = 0; row < this.size; row++) {
                     this.grid[row][col] = merged[row] || 0;
                 }
             }
         } else if (direction === 'down') {
-            for (let col = 0; col < 4; col++) {
+            for (let col = 0; col < this.size; col++) {
                 const column = this.grid.map(row => row[col]).filter(val => val !== 0).reverse();
                 const merged = this.mergeTiles(column).reverse();
                 // 從底部開始填充
-                while (merged.length < 4) merged.unshift(0);
-                for (let row = 0; row < 4; row++) {
+                while (merged.length < this.size) merged.unshift(0);
+                for (let row = 0; row < this.size; row++) {
                     this.grid[row][col] = merged[row];
                 }
             }
         } else if (direction === 'left') {
-            for (let row = 0; row < 4; row++) {
+            for (let row = 0; row < this.size; row++) {
                 const line = this.grid[row].filter(val => val !== 0);
                 this.grid[row] = this.mergeTiles(line);
-                while (this.grid[row].length < 4) this.grid[row].push(0);
+                while (this.grid[row].length < this.size) this.grid[row].push(0);
             }
         } else if (direction === 'right') {
-            for (let row = 0; row < 4; row++) {
+            for (let row = 0; row < this.size; row++) {
                 const line = this.grid[row].filter(val => val !== 0).reverse();
                 const merged = this.mergeTiles(line).reverse();
                 this.grid[row] = merged;
-                while (this.grid[row].length < 4) this.grid[row].unshift(0);
+                while (this.grid[row].length < this.size) this.grid[row].unshift(0);
             }
         }
 
@@ -68,7 +69,7 @@ class Game2048 {
             this.addRandomTile();
             if (this.score > this.bestScore) {
                 this.bestScore = this.score;
-                localStorage.setItem('best2048Score', this.bestScore.toString());
+                localStorage.setItem(`best2048Score_${this.size}`, this.bestScore.toString());
             }
             this.checkGameStatus();
         }
@@ -105,18 +106,18 @@ class Game2048 {
 
     canMove() {
         // Check for empty cells
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
                 if (this.grid[i][j] === 0) return true;
             }
         }
 
         // Check for possible merges
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
                 const current = this.grid[i][j];
-                if (j < 3 && current === this.grid[i][j + 1]) return true;
-                if (i < 3 && current === this.grid[i + 1][j]) return true;
+                if (j < this.size - 1 && current === this.grid[i][j + 1]) return true;
+                if (i < this.size - 1 && current === this.grid[i + 1][j]) return true;
             }
         }
 
@@ -474,7 +475,10 @@ class SudokuGame {
 
         // 2048 模式
         if (this.gameMode === '2048') {
-            this.game2048 = new Game2048();
+            // 根據難度選擇網格大小：簡單4x4、中等5x5、困難6x6
+            const size = this.difficulty === 'easy' ? 4 :
+                this.difficulty === 'medium' ? 5 : 6;
+            this.game2048 = new Game2048(size);
             this.gameOhh1 = null;
             this.gameOver = false;
             this.timer = 0;
@@ -891,14 +895,15 @@ class SudokuGame {
 
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-ohh1', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15'); // 移除其他模式的樣式
-        boardElement.classList.add('mode-2048');
+        // 移除其他模式的樣式和 2048 的不同大小類別
+        boardElement.classList.remove('mode-ohh1', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
+        boardElement.classList.add('mode-2048', `grid-2048-${this.game2048.size}`);
 
         // 更新分數顯示
-        document.getElementById('mistakes').textContent = `分數: ${this.game2048.score}`;
+        document.getElementById('mistakes').textContent = `${this.game2048.score}`;
 
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < this.game2048.size; row++) {
+            for (let col = 0; col < this.game2048.size; col++) {
                 const cell = document.createElement('div');
                 cell.className = 'sudoku-cell tile-2048';
                 const value = this.game2048.grid[row][col];
@@ -917,7 +922,7 @@ class SudokuGame {
             this.showMessage('😢', '遊戲結束', `最終分數：${this.game2048.score}`);
             this.stopTimer();
         } else if (this.game2048.won) {
-            this.showMessage('🎉', '恭喜寶貝贏得 2048！', `分數：${this.game2048.score}`);
+            this.showMessage('🎉', '恭喜過關,寶貝最聰明！', `2048分數：${this.game2048.score}`);
             this.game2048.won = false; // 允許繼續玩
         }
     }
@@ -969,7 +974,7 @@ class SudokuGame {
 
                         if (this.gameOhh1.checkWin()) {
                             this.gameOhh1.gameOver = true;
-                            this.showMessage('🎉', '恭喜寶貝完成！', '你成功解開了 Oh h1 謎題！');
+                            this.showMessage('🎉', '恭喜過關,寶貝最棒！', '成功解開了 Oh h1 謎題！');
                             document.getElementById('mistakes').textContent = '完成';
                             this.stopTimer();
                         }
@@ -1041,7 +1046,7 @@ class SudokuGame {
 
                         if (this.gameNonogram.checkWin()) {
                             this.gameNonogram.gameOver = true;
-                            this.showMessage('🎉', '恭喜寶貝完成！', '您成功解開了 Nonogram 謎題！');
+                            this.showMessage('🎉', '恭喜過關,寶貝超讚！', '成功解開了 Nonogram 謎題！');
                             document.getElementById('mistakes').textContent = '完成';
                             this.stopTimer();
                         }
@@ -1319,7 +1324,7 @@ class SudokuGame {
         if (won) {
             board.classList.add('victory');
             this.createConfetti();
-            this.showMessage('🎉', '恭喜完成！\n寶貝 我愛你', `用時：${this.formatTime(this.timer)}`);
+            this.showMessage('🎉', '恭喜破關！\n寶貝 我愛你', `用時：${this.formatTime(this.timer)}`);
         } else {
             this.showMessage('😢', '遊戲結束', '錯誤次數已達上限');
         }
@@ -1391,6 +1396,24 @@ class SudokuGame {
         if (this.lastInputNumber !== null && this.lastInputNumber > 0 && correctCounts[this.lastInputNumber] >= 9) {
             this.lastInputNumber = null;
             this.updateAutoFillHighlight();
+        }
+    }
+
+    updateDifficultyLabels() {
+        const gameMode = document.getElementById('game-mode').value;
+        const difficultySelect = document.getElementById('difficulty');
+        const options = difficultySelect.options;
+
+        if (gameMode === '2048') {
+            // 2048 模式顯示格子大小
+            options[0].textContent = '4×4';
+            options[1].textContent = '5×5';
+            options[2].textContent = '6×6';
+        } else {
+            // 其他模式顯示難度
+            options[0].textContent = '簡單';
+            options[1].textContent = '中等';
+            options[2].textContent = '困難';
         }
     }
 
@@ -1535,7 +1558,10 @@ class SudokuGame {
         document.getElementById('difficulty').addEventListener('change', () => this.newGame());
 
         // Game mode change
-        document.getElementById('game-mode').addEventListener('change', () => this.newGame());
+        document.getElementById('game-mode').addEventListener('change', () => {
+            this.updateDifficultyLabels();
+            this.newGame();
+        });
 
         // Help button toggle
         document.getElementById('help-btn').addEventListener('click', () => {
@@ -1596,12 +1622,24 @@ class SudokuGame {
         // 觸控滑動支援（僅在 2048 模式啟用）
         let touchStartX = 0;
         let touchStartY = 0;
+        let touchStartScrollY = 0;
 
         document.getElementById('sudoku-board').addEventListener('touchstart', (e) => {
             if (this.gameMode !== '2048') return;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-        });
+            touchStartScrollY = window.scrollY;
+        }, { passive: true });
+
+        document.getElementById('sudoku-board').addEventListener('touchmove', (e) => {
+            if (this.gameMode !== '2048') return;
+            // 減少畫面滾動幅度到 20%
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - touchStartY;
+            const reducedScroll = touchStartScrollY - (deltaY * 0.2);
+            window.scrollTo(0, reducedScroll);
+            e.preventDefault();
+        }, { passive: false });
 
         document.getElementById('sudoku-board').addEventListener('touchend', (e) => {
             if (this.gameMode !== '2048') return;
