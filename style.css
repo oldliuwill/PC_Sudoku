@@ -752,9 +752,9 @@ body::before {
     }
 
     .sudoku-cell {
-        width: 32px;
-        height: 32px;
-        font-size: 1.1rem;
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
     }
 
     .sudoku-cell .notes {
@@ -778,9 +778,9 @@ body::before {
 
 @media (max-width: 380px) {
     .sudoku-cell {
-        width: 28px;
-        height: 28px;
-        font-size: 1rem;
+        width: 31px;
+        height: 31px;
+        font-size: 1.1rem;
     }
 
     .game-controls {
