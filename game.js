@@ -432,6 +432,165 @@ class GameNonogram {
     }
 }
 
+// Nerdle 遊戲類別 - 數學算式猜謎
+class GameNerdle {
+    constructor(maxGuesses = 6) {
+        this.equation = this.generateEquation(); // 正確答案（8位字串）
+        this.guesses = [];      // 已猜測的算式
+        this.results = [];      // 每次猜測的顏色結果
+        this.maxGuesses = maxGuesses; // 猜測次數
+        this.currentInput = ''; // 當前輸入
+        this.gameOver = false;
+        this.won = false;
+    }
+
+    // 生成有效的 8 位數學算式
+    generateEquation() {
+        const equations = [];
+
+        // 生成 a op b = c 格式的算式
+        for (let a = 1; a <= 99; a++) {
+            for (let b = 1; b <= 99; b++) {
+                // 加法
+                let result = a + b;
+                let eq = `${a}+${b}=${result}`;
+                if (eq.length === 8) equations.push(eq);
+
+                // 減法
+                if (a > b) {
+                    result = a - b;
+                    eq = `${a}-${b}=${result}`;
+                    if (eq.length === 8) equations.push(eq);
+                }
+
+                // 乘法
+                result = a * b;
+                eq = `${a}*${b}=${result}`;
+                if (eq.length === 8) equations.push(eq);
+
+                // 除法（整除）
+                if (b !== 0 && a % b === 0) {
+                    result = a / b;
+                    eq = `${a}/${b}=${result}`;
+                    if (eq.length === 8) equations.push(eq);
+                }
+            }
+        }
+
+        // 隨機選擇一個
+        return equations[Math.floor(Math.random() * equations.length)];
+    }
+
+    // 驗證玩家輸入的算式是否有效
+    validateInput(input) {
+        if (input.length !== 8) return { valid: false, error: '算式必須是 8 個字元' };
+
+        // 檢查格式：必須包含一個等號
+        const eqIndex = input.indexOf('=');
+        if (eqIndex === -1) return { valid: false, error: '必須包含等號' };
+        if (input.indexOf('=', eqIndex + 1) !== -1) return { valid: false, error: '只能有一個等號' };
+
+        const leftSide = input.substring(0, eqIndex);
+        const rightSide = input.substring(eqIndex + 1);
+
+        // 右邊必須是數字
+        if (!/^\d+$/.test(rightSide)) return { valid: false, error: '等號右邊必須是數字' };
+
+        // 左邊必須是有效算式
+        if (!/^[\d+\-*/]+$/.test(leftSide)) return { valid: false, error: '左邊包含無效字元' };
+        if (/^[+\-*/]/.test(leftSide) || /[+\-*/]$/.test(leftSide)) {
+            return { valid: false, error: '運算符位置錯誤' };
+        }
+
+        // 計算左邊
+        try {
+            const calculated = Function('"use strict"; return (' + leftSide + ')')();
+            if (calculated !== parseInt(rightSide)) {
+                return { valid: false, error: '算式計算結果不正確' };
+            }
+        } catch (e) {
+            return { valid: false, error: '無效的算式' };
+        }
+
+        return { valid: true };
+    }
+
+    // 比對猜測並返回顏色陣列
+    checkGuess(guess) {
+        const result = new Array(8).fill('black');
+        const answerChars = this.equation.split('');
+        const guessChars = guess.split('');
+        const usedAnswer = new Array(8).fill(false);
+        const usedGuess = new Array(8).fill(false);
+
+        // 第一輪：找出綠色（位置正確）
+        for (let i = 0; i < 8; i++) {
+            if (guessChars[i] === answerChars[i]) {
+                result[i] = 'green';
+                usedAnswer[i] = true;
+                usedGuess[i] = true;
+            }
+        }
+
+        // 第二輪：找出紫色（存在但位置錯誤）
+        for (let i = 0; i < 8; i++) {
+            if (!usedGuess[i]) {
+                for (let j = 0; j < 8; j++) {
+                    if (!usedAnswer[j] && guessChars[i] === answerChars[j]) {
+                        result[i] = 'purple';
+                        usedAnswer[j] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // 提交猜測
+    submitGuess(guess) {
+        if (this.gameOver) return { success: false, error: '遊戲已結束' };
+
+        const validation = this.validateInput(guess);
+        if (!validation.valid) return { success: false, error: validation.error };
+
+        const result = this.checkGuess(guess);
+        this.guesses.push(guess);
+        this.results.push(result);
+
+        // 檢查是否獲勝
+        if (guess === this.equation) {
+            this.won = true;
+            this.gameOver = true;
+        } else if (this.guesses.length >= this.maxGuesses) {
+            this.gameOver = true;
+        }
+
+        this.currentInput = '';
+        return { success: true, result };
+    }
+
+    // 輸入字元
+    inputChar(char) {
+        if (this.gameOver) return false;
+        if (this.currentInput.length < 8) {
+            this.currentInput += char;
+            return true;
+        }
+        return false;
+    }
+
+    // 刪除字元
+    deleteChar() {
+        if (this.currentInput.length > 0) {
+            this.currentInput = this.currentInput.slice(0, -1);
+            return true;
+        }
+        return false;
+    }
+}
+
 // 甜心數獨 - Cute Sudoku Game
 
 class SudokuGame {
@@ -448,12 +607,13 @@ class SudokuGame {
         this.timerInterval = null;
         this.gameOver = false;
         this.difficulty = 'medium';
-        this.gameMode = 'normal'; // 'normal' 或 'killer' 或 '2048' 或 'ohh1' 或 'nonogram'
+        this.gameMode = 'normal'; // 'normal' 或 'killer' 或 '2048' 或 'ohh1' 或 'nonogram' 或 'nerdle'
         this.cages = []; // 殺手數獨的籠子
         this.cellToCage = []; // 每個格子對應的籠子索引
         this.game2048 = null; // 2048 遊戲實例
         this.gameOhh1 = null; // Oh h1 遊戲實例
         this.gameNonogram = null; // Nonogram 遊戲實例
+        this.gameNerdle = null; // Nerdle 遊戲實例
         this.difficultySettings = {
             easy: 38,      // 38 cells revealed
             medium: 30,    // 30 cells revealed
@@ -528,10 +688,32 @@ class SudokuGame {
             return;
         }
 
+        // Nerdle 模式
+        if (this.gameMode === 'nerdle') {
+            // 根據難度設定猜測次數：簡單7次、中等6次、困難5次
+            const maxGuesses = this.difficulty === 'easy' ? 7 :
+                this.difficulty === 'medium' ? 6 : 5;
+            this.gameNerdle = new GameNerdle(maxGuesses);
+            this.game2048 = null;
+            this.gameOhh1 = null;
+            this.gameNonogram = null;
+            this.gameOver = false;
+            this.timer = 0;
+            document.getElementById('mistakes-label').textContent = '剩餘';
+            document.getElementById('mistakes').textContent = this.gameNerdle.maxGuesses - this.gameNerdle.guesses.length;
+            this.hideGameControls(); // 隱藏數獨專用控制項
+            this.updateTimerDisplay();
+            this.startTimer();
+            this.hideMessage();
+            this.renderNerdle();
+            return;
+        }
+
         // 數獨/殺手數獨模式
         this.game2048 = null;
         this.gameOhh1 = null;
         this.gameNonogram = null;
+        this.gameNerdle = null;
         document.getElementById('mistakes-label').textContent = '錯誤';
         this.showGameControls(); // 顯示數獨專用控制項
         this.board = Array(9).fill(null).map(() => Array(9).fill(0));
@@ -800,9 +982,9 @@ class SudokuGame {
     renderBoard() {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram'); // 移除所有模式的樣式
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle'); // 移除所有模式的樣式
         // 移除所有格子大小類別
-        boardElement.classList.remove('grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
+        boardElement.classList.remove('grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
 
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 9; col++) {
@@ -896,7 +1078,7 @@ class SudokuGame {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
         // 移除其他模式的樣式和 2048 的不同大小類別
-        boardElement.classList.remove('mode-ohh1', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
+        boardElement.classList.remove('mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-2048', `grid-2048-${this.game2048.size}`);
 
         // 更新分數顯示
@@ -947,7 +1129,7 @@ class SudokuGame {
 
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
+        boardElement.classList.remove('mode-2048', 'mode-nonogram', 'mode-nerdle', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-ohh1', `grid-${this.gameOhh1.size}`);
 
         for (let row = 0; row < this.gameOhh1.size; row++) {
@@ -991,7 +1173,7 @@ class SudokuGame {
 
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15');
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nerdle', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-nonogram', `grid-${this.gameNonogram.size}`);
 
         // 渲染格子和提示數字
@@ -1055,6 +1237,122 @@ class SudokuGame {
 
                 boardElement.appendChild(cell);
             }
+        }
+    }
+
+    renderNerdle() {
+        if (!this.gameNerdle) return;
+
+        const boardElement = document.getElementById('sudoku-board');
+        boardElement.innerHTML = '';
+        // 移除其他模式的樣式
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'grid-5', 'grid-6', 'grid-8', 'grid-10', 'grid-15', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
+        boardElement.classList.add('mode-nerdle');
+
+        // 建立 Nerdle 容器
+        const nerdleContainer = document.createElement('div');
+        nerdleContainer.className = 'nerdle-container';
+
+        // 渲染已猜測的算式（6行 × 8列）
+        for (let row = 0; row < this.gameNerdle.maxGuesses; row++) {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'nerdle-row';
+
+            for (let col = 0; col < 8; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'nerdle-cell';
+
+                if (row < this.gameNerdle.guesses.length) {
+                    // 已猜測的行
+                    cell.textContent = this.gameNerdle.guesses[row][col];
+                    cell.classList.add(`nerdle-${this.gameNerdle.results[row][col]}`);
+                } else if (row === this.gameNerdle.guesses.length) {
+                    // 當前輸入行
+                    if (col < this.gameNerdle.currentInput.length) {
+                        cell.textContent = this.gameNerdle.currentInput[col];
+                    }
+                    cell.classList.add('nerdle-current');
+                }
+
+                rowDiv.appendChild(cell);
+            }
+
+            nerdleContainer.appendChild(rowDiv);
+        }
+
+        boardElement.appendChild(nerdleContainer);
+
+        // 渲染鍵盤
+        const keyboard = document.createElement('div');
+        keyboard.className = 'nerdle-keyboard';
+
+        const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '-', '*', '/', '='];
+        const row1 = document.createElement('div');
+        row1.className = 'nerdle-keyboard-row';
+
+        keys.forEach(key => {
+            const btn = document.createElement('button');
+            btn.className = 'nerdle-key';
+            btn.textContent = key;
+            btn.addEventListener('click', () => this.handleNerdleInput(key));
+            row1.appendChild(btn);
+        });
+        keyboard.appendChild(row1);
+
+        const row2 = document.createElement('div');
+        row2.className = 'nerdle-keyboard-row';
+
+        const enterBtn = document.createElement('button');
+        enterBtn.className = 'nerdle-key nerdle-key-wide';
+        enterBtn.textContent = '確認';
+        enterBtn.addEventListener('click', () => this.submitNerdleGuess());
+        row2.appendChild(enterBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'nerdle-key nerdle-key-wide';
+        deleteBtn.textContent = '刪除';
+        deleteBtn.addEventListener('click', () => this.handleNerdleDelete());
+        row2.appendChild(deleteBtn);
+
+        keyboard.appendChild(row2);
+        boardElement.appendChild(keyboard);
+
+        // 更新剩餘次數
+        document.getElementById('mistakes').textContent = this.gameNerdle.maxGuesses - this.gameNerdle.guesses.length;
+    }
+
+    handleNerdleInput(char) {
+        if (this.gameNerdle && this.gameNerdle.inputChar(char)) {
+            this.renderNerdle();
+        }
+    }
+
+    handleNerdleDelete() {
+        if (this.gameNerdle && this.gameNerdle.deleteChar()) {
+            this.renderNerdle();
+        }
+    }
+
+    submitNerdleGuess() {
+        if (!this.gameNerdle) return;
+
+        const result = this.gameNerdle.submitGuess(this.gameNerdle.currentInput);
+
+        if (!result.success) {
+            // 顯示錯誤提示
+            alert(result.error);
+            return;
+        }
+
+        this.renderNerdle();
+
+        // 檢查遊戲結束
+        if (this.gameNerdle.won) {
+            this.showMessage('🎉', '恭喜猜對了！', `答案是 ${this.gameNerdle.equation}`);
+            this.stopTimer();
+        } else if (this.gameNerdle.gameOver) {
+            this.showMessage('😢', '遊戲結束', `正確答案是 ${this.gameNerdle.equation}`);
+            this.stopTimer();
         }
     }
 
