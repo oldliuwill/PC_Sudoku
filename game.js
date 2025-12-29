@@ -327,31 +327,47 @@ class GameNonogram {
     }
 
     generatePuzzle() {
-        // 生成隨機圖案
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                // 約50%機率填滿，但確保不會全空或全滿
-                this.solution[i][j] = Math.random() < 0.5 ? 1 : 0;
+        let attempts = 0;
+        const maxAttempts = 100; // 避免無限循環
+
+        while (attempts < maxAttempts) {
+            attempts++;
+
+            // 生成隨機圖案
+            for (let i = 0; i < this.size; i++) {
+                for (let j = 0; j < this.size; j++) {
+                    // 約50%機率填滿，但確保不會全空或全滿
+                    this.solution[i][j] = Math.random() < 0.5 ? 1 : 0;
+                }
+            }
+
+            // 確保至少有一些填滿的格子
+            let filledCount = 0;
+            for (let i = 0; i < this.size; i++) {
+                for (let j = 0; j < this.size; j++) {
+                    if (this.solution[i][j] === 1) filledCount++;
+                }
+            }
+
+            // 如果太少或太多，重新生成
+            const minFilled = Math.floor(this.size * this.size * 0.3);
+            const maxFilled = Math.floor(this.size * this.size * 0.7);
+            if (filledCount < minFilled || filledCount > maxFilled) {
+                continue;
+            }
+
+            // 計算提示數字
+            this.calculateAllHints();
+
+            // 驗證是否有唯一解
+            if (this.hasUniqueSolution()) {
+                console.log(`找到唯一解謎題，嘗試次數: ${attempts}`);
+                return;
             }
         }
 
-        // 確保至少有一些填滿的格子
-        let filledCount = 0;
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                if (this.solution[i][j] === 1) filledCount++;
-            }
-        }
-
-        // 如果太少或太多，重新生成
-        const minFilled = Math.floor(this.size * this.size * 0.2);
-        const maxFilled = Math.floor(this.size * this.size * 0.8);
-        if (filledCount < minFilled || filledCount > maxFilled) {
-            return this.generatePuzzle();
-        }
-
-        // 計算提示數字
-        this.calculateAllHints();
+        // 如果達到最大嘗試次數仍未找到唯一解，使用最後一個謎題
+        console.warn(`達到最大嘗試次數 ${maxAttempts}，使用當前謎題`);
     }
 
     calculateAllHints() {
@@ -390,6 +406,196 @@ class GameNonogram {
         }
 
         return hints.length > 0 ? hints : [0];
+    }
+
+    // 生成符合提示的所有可能行/列排列
+    getLinePossibilities(hints, length) {
+        const possibilities = [];
+
+        // 處理空行情況
+        if (hints.length === 1 && hints[0] === 0) {
+            return [Array(length).fill(0)];
+        }
+
+        // 計算最小需要長度
+        const minLength = hints.reduce((sum, h) => sum + h, 0) + hints.length - 1;
+        if (minLength > length) return [];
+
+        // 回溯生成所有可能排列
+        const generate = (hintIndex, position, current) => {
+            // 完成所有提示
+            if (hintIndex === hints.length) {
+                // 填充剩餘空格
+                while (current.length < length) {
+                    current.push(0);
+                }
+                possibilities.push([...current]);
+                return;
+            }
+
+            const hint = hints[hintIndex];
+            const remainingHints = hints.slice(hintIndex + 1);
+            const remainingSpace = remainingHints.reduce((sum, h) => sum + h + 1, 0);
+
+            // 嘗試在不同位置放置當前提示
+            for (let start = position; start <= length - hint - remainingSpace; start++) {
+                const newCurrent = [...current];
+
+                // 添加前導0
+                while (newCurrent.length < start) {
+                    newCurrent.push(0);
+                }
+
+                // 添加連續的1
+                for (let i = 0; i < hint; i++) {
+                    newCurrent.push(1);
+                }
+
+                // 如果不是最後一組，添加至少一個0作為分隔
+                const nextPosition = newCurrent.length + (hintIndex < hints.length - 1 ? 1 : 0);
+                generate(hintIndex + 1, nextPosition, newCurrent);
+            }
+        };
+
+        generate(0, 0, []);
+        return possibilities;
+    }
+
+    // 使用約束傳播求解
+    solveWithConstraints(maxSolutions = 2) {
+        const size = this.size;
+        const solutions = [];
+
+        // 初始化可能性空間
+        const rowPossibilities = [];
+        const colPossibilities = [];
+
+        for (let i = 0; i < size; i++) {
+            rowPossibilities.push(this.getLinePossibilities(this.rowHints[i], size));
+            colPossibilities.push(this.getLinePossibilities(this.colHints[i], size));
+        }
+
+        // 如果任何行或列沒有可能的排列，則無解
+        for (let i = 0; i < size; i++) {
+            if (rowPossibilities[i].length === 0 || colPossibilities[i].length === 0) {
+                return [];
+            }
+        }
+
+        // 建立初始網格（-1表示未知）
+        const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
+
+        // 遞迴求解
+        const solve = (currentGrid) => {
+            if (solutions.length >= maxSolutions) return;
+
+            // 約束傳播：消除不一致的可能性
+            let changed = true;
+            const localRowPoss = rowPossibilities.map(arr => [...arr]);
+            const localColPoss = colPossibilities.map(arr => [...arr]);
+            const workGrid = currentGrid.map(row => [...row]);
+
+            while (changed) {
+                changed = false;
+
+                // 根據已知格子過濾行可能性
+                for (let i = 0; i < size; i++) {
+                    const newRowPoss = localRowPoss[i].filter(possibility => {
+                        for (let j = 0; j < size; j++) {
+                            if (workGrid[i][j] !== -1 && possibility[j] !== workGrid[i][j]) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+
+                    if (newRowPoss.length === 0) return; // 無解
+                    if (newRowPoss.length < localRowPoss[i].length) {
+                        localRowPoss[i] = newRowPoss;
+                        changed = true;
+                    }
+                }
+
+                // 根據已知格子過濾列可能性
+                for (let j = 0; j < size; j++) {
+                    const newColPoss = localColPoss[j].filter(possibility => {
+                        for (let i = 0; i < size; i++) {
+                            if (workGrid[i][j] !== -1 && possibility[i] !== workGrid[i][j]) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+
+                    if (newColPoss.length === 0) return; // 無解
+                    if (newColPoss.length < localColPoss[j].length) {
+                        localColPoss[j] = newColPoss;
+                        changed = true;
+                    }
+                }
+
+                // 確定必然的格子
+                for (let i = 0; i < size; i++) {
+                    for (let j = 0; j < size; j++) {
+                        if (workGrid[i][j] === -1) {
+                            // 檢查該位置在所有可能性中是否都相同
+                            const rowValues = new Set(localRowPoss[i].map(p => p[j]));
+                            const colValues = new Set(localColPoss[j].map(p => p[i]));
+
+                            if (rowValues.size === 1) {
+                                workGrid[i][j] = [...rowValues][0];
+                                changed = true;
+                            } else if (colValues.size === 1) {
+                                workGrid[i][j] = [...colValues][0];
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 檢查是否完成
+            let complete = true;
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (workGrid[i][j] === -1) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (!complete) break;
+            }
+
+            if (complete) {
+                solutions.push(workGrid.map(row => [...row]));
+                return;
+            }
+
+            // 找到第一個未確定的格子進行猜測
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (workGrid[i][j] === -1) {
+                        // 嘗試 0 和 1
+                        for (const value of [0, 1]) {
+                            const newGrid = workGrid.map(row => [...row]);
+                            newGrid[i][j] = value;
+                            solve(newGrid);
+                            if (solutions.length >= maxSolutions) return;
+                        }
+                        return;
+                    }
+                }
+            }
+        };
+
+        solve(grid);
+        return solutions;
+    }
+
+    // 驗證謎題是否有唯一解
+    hasUniqueSolution() {
+        const solutions = this.solveWithConstraints(2);
+        return solutions.length === 1;
     }
 
     toggleCell(row, col) {
