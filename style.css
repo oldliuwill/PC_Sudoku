@@ -147,9 +147,29 @@ body::before {
 }
 
 .help-panel.show {
-    max-height: 400px;
+    max-height: 80vh;
+    overflow-y: scroll;
     margin-top: 10px;
     padding: 15px;
+}
+
+/* Help panel scrollbar styling */
+.help-panel.show::-webkit-scrollbar {
+    width: 10px;
+}
+
+.help-panel.show::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.help-panel.show::-webkit-scrollbar-thumb {
+    background: #ff6b9d;
+    border-radius: 5px;
+}
+
+.help-panel.show::-webkit-scrollbar-thumb:hover {
+    background: #ff4d7d;
 }
 
 .help-content h3 {
@@ -611,7 +631,7 @@ body::before {
 
 /* Message overlay */
 .message-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -621,11 +641,11 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 30px;
+    border-radius: 0;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 100;
+    z-index: 1000;
 }
 
 .message-overlay.show {
@@ -636,6 +656,32 @@ body::before {
 .message-content {
     text-align: center;
     animation: messagePopIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 80vh;
+    max-width: 90vw;
+    overflow-y: scroll;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure scrollbar is always visible */
+.message-content::-webkit-scrollbar {
+    width: 12px;
+}
+
+.message-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.message-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.message-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 @keyframes messagePopIn {
@@ -1369,4 +1415,932 @@ body::before {
     font-size: 0.9rem;
     background: linear-gradient(135deg, #ff9a9e 0%, #ff6b9d 100%);
     color: white;
+}
+
+/* ===== Minesweeper 踩地雷遊戲樣式 ===== */
+
+/* Minesweeper 模式基礎樣式 */
+.sudoku-board.mode-minesweeper {
+    width: auto;
+    justify-content: center;
+    gap: 0;
+    padding: 4px;
+    background: #bdbdbd;
+    border-radius: 4px;
+    border: 3px solid #999;
+}
+
+/* 各難度格子大小 */
+.sudoku-board.mode-minesweeper.grid-9 {
+    grid-template-columns: repeat(9, 34px);
+    grid-template-rows: repeat(9, 34px);
+}
+
+.sudoku-board.mode-minesweeper.grid-12 {
+    grid-template-columns: repeat(12, 28px);
+    grid-template-rows: repeat(12, 28px);
+}
+
+.sudoku-board.mode-minesweeper.grid-16 {
+    grid-template-columns: repeat(16, 23px);
+    grid-template-rows: repeat(16, 23px);
+}
+
+/* 格子基礎樣式 */
+.mine-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s ease;
+    position: relative;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+}
+
+/* 未揭開格子 - 3D 凸起 */
+.mine-hidden {
+    background: linear-gradient(145deg, #e6e6e6 0%, #c8c8c8 100%);
+    border-top: 2px solid #f5f5f5;
+    border-left: 2px solid #f0f0f0;
+    border-right: 2px solid #999;
+    border-bottom: 2px solid #999;
+    border-radius: 2px;
+}
+
+.mine-hidden:hover {
+    background: linear-gradient(145deg, #f0f0f0 0%, #d5d5d5 100%);
+    transform: scale(1.02);
+}
+
+.mine-hidden:active {
+    border-top: 2px solid #999;
+    border-left: 2px solid #999;
+    border-right: 2px solid #f5f5f5;
+    border-bottom: 2px solid #f0f0f0;
+    background: #c8c8c8;
+}
+
+/* 揭開的格子 */
+.mine-revealed {
+    background: #e8e8e8;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    cursor: default;
+    font-size: 0.95rem;
+}
+
+.sudoku-board.mode-minesweeper.grid-9 .mine-revealed {
+    font-size: 1.1rem;
+}
+
+.sudoku-board.mode-minesweeper.grid-12 .mine-revealed {
+    font-size: 0.9rem;
+}
+
+.sudoku-board.mode-minesweeper.grid-16 .mine-revealed {
+    font-size: 0.75rem;
+}
+
+/* 旗標格子 */
+.mine-flagged {
+    background: linear-gradient(145deg, #e6e6e6 0%, #c8c8c8 100%);
+    border-top: 2px solid #f5f5f5;
+    border-left: 2px solid #f0f0f0;
+    border-right: 2px solid #999;
+    border-bottom: 2px solid #999;
+    border-radius: 2px;
+    animation: flagPlant 0.3s ease;
+}
+
+.sudoku-board.mode-minesweeper.grid-9 .mine-flagged,
+.sudoku-board.mode-minesweeper.grid-9 .mine-hidden {
+    font-size: 1.1rem;
+}
+
+.sudoku-board.mode-minesweeper.grid-12 .mine-flagged,
+.sudoku-board.mode-minesweeper.grid-12 .mine-hidden {
+    font-size: 0.85rem;
+}
+
+.sudoku-board.mode-minesweeper.grid-16 .mine-flagged,
+.sudoku-board.mode-minesweeper.grid-16 .mine-hidden {
+    font-size: 0.7rem;
+}
+
+@keyframes flagPlant {
+    0% {
+        transform: scale(0.5) rotate(-15deg);
+    }
+
+    60% {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0);
+    }
+}
+
+/* 踩到地雷 - 爆炸效果 */
+.mine-exploded {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%) !important;
+    border: 1px solid #cc0000;
+    animation: mineExplode 0.5s ease;
+}
+
+@keyframes mineExplode {
+    0% {
+        transform: scale(1);
+        background: #e8e8e8;
+    }
+
+    30% {
+        transform: scale(1.3);
+        background: #ff6666;
+    }
+
+    60% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 數字顏色 */
+.mine-number-1 {
+    color: #2563eb;
+}
+
+.mine-number-2 {
+    color: #16a34a;
+}
+
+.mine-number-3 {
+    color: #dc2626;
+}
+
+.mine-number-4 {
+    color: #7c3aed;
+}
+
+.mine-number-5 {
+    color: #b91c1c;
+}
+
+.mine-number-6 {
+    color: #0891b2;
+}
+
+.mine-number-7 {
+    color: #1e293b;
+}
+
+.mine-number-8 {
+    color: #6b7280;
+}
+
+/* 響應式調整 */
+@media (max-width: 480px) {
+    .sudoku-board.mode-minesweeper.grid-9 {
+        grid-template-columns: repeat(9, 30px);
+        grid-template-rows: repeat(9, 30px);
+    }
+
+    .sudoku-board.mode-minesweeper.grid-12 {
+        grid-template-columns: repeat(12, 24px);
+        grid-template-rows: repeat(12, 24px);
+    }
+
+    .sudoku-board.mode-minesweeper.grid-16 {
+        grid-template-columns: repeat(16, 18px);
+        grid-template-rows: repeat(16, 18px);
+    }
+
+    .sudoku-board.mode-minesweeper.grid-16 .mine-revealed {
+        font-size: 0.6rem;
+    }
+
+    .sudoku-board.mode-minesweeper.grid-16 .mine-flagged,
+    .sudoku-board.mode-minesweeper.grid-16 .mine-hidden {
+        font-size: 0.55rem;
+    }
+}
+
+/* Minesweeper 模式切換控制項 */
+.minesweeper-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.btn-mine-mode {
+    flex: 1;
+    max-width: 200px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+    background: linear-gradient(135deg, #e8e8e8, #d0d0d0);
+    color: #666;
+}
+
+.btn-mine-mode.active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+    background: linear-gradient(135deg, var(--lavender), var(--purple));
+    color: white;
+}
+
+.btn-mine-mode .btn-icon {
+    font-size: 1.5rem;
+}
+
+.btn-mine-mode:hover {
+    opacity: 0.8;
+}
+
+.btn-mine-mode.active:hover {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+/* 響應式調整 - 手機版 */
+@media (max-width: 480px) {
+    .minesweeper-controls {
+        gap: 0.5rem;
+        margin: 0.75rem 0;
+    }
+
+    .btn-mine-mode {
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .btn-mine-mode .btn-icon {
+        font-size: 1.3rem;
+    }
+}
+
+/* Mastermind Game Styles */
+.mastermind-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mastermind-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--secondary-pink);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Guess History */
+.mastermind-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+}
+
+.mastermind-guess-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Color Pegs */
+.mastermind-pegs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.mastermind-peg {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.mastermind-peg.empty {
+    background: linear-gradient(135deg, #f0f0f0, #d0d0d0);
+    border: 2px dashed #aaa;
+}
+
+.mastermind-pegs.current .mastermind-peg {
+    width: 50px;
+    height: 50px;
+}
+
+/* Feedback Pegs */
+.mastermind-feedback {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    width: 60px;
+    justify-content: center;
+}
+
+.mastermind-feedback-peg {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid #666;
+}
+
+.mastermind-feedback-peg.black {
+    background: #1a1a1a;
+}
+
+.mastermind-feedback-peg.white {
+    background: #e5e7eb;
+}
+
+/* Current Section */
+.mastermind-current {
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255, 240, 245, 0.8), rgba(255, 255, 255, 0.8));
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(255, 107, 157, 0.15);
+}
+
+/* Color Palette */
+.mastermind-palette {
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 240, 245, 0.9));
+    border-radius: 15px;
+}
+
+.mastermind-colors {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mastermind-color-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid #999;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mastermind-color-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    border-color: #666;
+}
+
+.mastermind-color-btn:active {
+    transform: scale(0.95);
+}
+
+/* Control Buttons */
+.mastermind-controls {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-mastermind {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--lavender), var(--purple));
+    color: white;
+    box-shadow: 0 4px 15px rgba(201, 177, 255, 0.4);
+}
+
+.btn-mastermind:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201, 177, 255, 0.5);
+}
+
+.btn-mastermind:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-mastermind.submit {
+    background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+}
+
+.btn-mastermind.submit:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+}
+
+.mastermind-error {
+    color: var(--error-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    text-align: center;
+    animation: shake 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .mastermind-container {
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+
+    .mastermind-peg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .mastermind-pegs.current .mastermind-peg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mastermind-color-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .btn-mastermind {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .mastermind-colors {
+        gap: 0.5rem;
+    }
+}
+
+/* Pipe / Netwalk Game Styles */
+.mode-pipe {
+    gap: 2px;
+    background: #2c3e50;
+    padding: 5px;
+}
+
+.sudoku-board.grid-7 {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.pipe-cell {
+    background: #34495e;
+    border: 1px solid #2c3e50;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pipe-cell:hover:not(.pipe-source) {
+    background: #3d566e;
+}
+
+/* Pipe lines using pseudo-elements */
+.pipe-cell::before,
+.pipe-cell::after {
+    content: '';
+    position: absolute;
+    background: #7f8c8d;
+    transition: all 0.3s ease;
+}
+
+/* Straight pipe - horizontal (rotation 0) */
+.pipe-straight.pipe-rotation-0::before {
+    width: 100%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+/* Straight pipe - vertical (rotation 1) */
+.pipe-straight.pipe-rotation-1::before {
+    width: 6px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Straight pipe - horizontal (rotation 2, same as 0) */
+.pipe-straight.pipe-rotation-2::before {
+    width: 100%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+/* Straight pipe - vertical (rotation 3, same as 1) */
+.pipe-straight.pipe-rotation-3::before {
+    width: 6px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Corner pipe - top-right (rotation 0) */
+.pipe-corner.pipe-rotation-0::before {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-corner.pipe-rotation-0::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Corner pipe - bottom-right (rotation 1) */
+.pipe-corner.pipe-rotation-1::before {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-corner.pipe-rotation-1::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+/* Corner pipe - bottom-left (rotation 2) */
+.pipe-corner.pipe-rotation-2::before {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-corner.pipe-rotation-2::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+/* Corner pipe - top-left (rotation 3) */
+.pipe-corner.pipe-rotation-3::before {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-corner.pipe-rotation-3::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* T-junction pipe - no left (rotation 0) */
+.pipe-t.pipe-rotation-0::before {
+    width: 6px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.pipe-t.pipe-rotation-0::after {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+/* T-junction pipe - no top (rotation 1) */
+.pipe-t.pipe-rotation-1::before {
+    width: 100%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-t.pipe-rotation-1::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+/* T-junction pipe - no right (rotation 2) */
+.pipe-t.pipe-rotation-2::before {
+    width: 6px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.pipe-t.pipe-rotation-2::after {
+    width: 50%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+/* T-junction pipe - no bottom (rotation 3) */
+.pipe-t.pipe-rotation-3::before {
+    width: 100%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-t.pipe-rotation-3::after {
+    width: 6px;
+    height: 50%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Cross pipe - all directions */
+.pipe-cross::before {
+    width: 100%;
+    height: 6px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.pipe-cross::after {
+    width: 6px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Connected pipes glow */
+.pipe-cell.pipe-connected::before,
+.pipe-cell.pipe-connected::after {
+    background: #f39c12;
+    box-shadow: 0 0 10px #f39c12, 0 0 20px rgba(243, 156, 18, 0.5);
+}
+
+/* Power source */
+.pipe-cell.pipe-source {
+    background: radial-gradient(circle, #e74c3c, #c0392b);
+    cursor: default;
+}
+
+.pipe-cell.pipe-source::before {
+    content: '⚡';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    color: #f1c40f;
+    animation: pulse 1.5s infinite;
+    z-index: 10;
+}
+
+.pipe-cell.pipe-source::after {
+    background: #f39c12;
+    box-shadow: 0 0 15px #f39c12, 0 0 30px rgba(243, 156, 18, 0.7);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+/* Light Bulb Styles */
+.pipe-bulb {
+    background: #2c3e50;
+}
+
+/* Bulb connection point (base) */
+.pipe-bulb::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 6px;
+    background: #7f8c8d;
+    transition: all 0.3s ease;
+}
+
+/* Bulb rotation 0 - connection at top */
+.pipe-bulb.pipe-rotation-0::before {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Bulb rotation 1 - connection at right */
+.pipe-bulb.pipe-rotation-1::before {
+    right: 0;
+    top: 50%;
+    width: 6px;
+    height: 30%;
+    transform: translateY(-50%);
+}
+
+/* Bulb rotation 2 - connection at bottom */
+.pipe-bulb.pipe-rotation-2::before {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Bulb rotation 3 - connection at left */
+.pipe-bulb.pipe-rotation-3::before {
+    left: 0;
+    top: 50%;
+    width: 6px;
+    height: 30%;
+    transform: translateY(-50%);
+}
+
+/* Bulb icon (unlit) */
+.pipe-bulb::after {
+    content: '💡';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    filter: grayscale(100%) brightness(0.5);
+    transition: all 0.3s ease;
+}
+
+/* Connected bulb glows */
+.pipe-bulb.pipe-connected::before {
+    background: #f39c12;
+    box-shadow: 0 0 10px #f39c12;
+}
+
+.pipe-bulb.pipe-connected::after {
+    filter: grayscale(0%) brightness(1.2);
+    text-shadow: 0 0 15px #ffd700, 0 0 25px #ffd700;
+}
+
+
+/* Grid size overrides for different game modes */
+.sudoku-board.grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.sudoku-board.grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.sudoku-board.grid-6 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+/* KenKen Game Styles */
+.mode-kenken {
+    padding: 10px;
+    gap: 0;
+    /* Grid template columns will be set by JS via grid-N class */
+}
+
+/* Base KenKen Cell */
+.kenken-cell {
+    background-color: white;
+    border: 1px dotted #ccc;
+    /* Light border between cells in same cage */
+    position: relative;
+    font-size: 1.5rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+/* Cage Borders - Thick borders */
+.kenken-cell.cage-border-top {
+    border-top: 3px solid #333;
+}
+
+.kenken-cell.cage-border-bottom {
+    border-bottom: 3px solid #333;
+}
+
+.kenken-cell.cage-border-left {
+    border-left: 3px solid #333;
+}
+
+.kenken-cell.cage-border-right {
+    border-right: 3px solid #333;
+}
+
+/* Operation Label */
+.kenken-operation {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #000;
+    line-height: 1;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Cell Value */
+.cell-value {
+    z-index: 1;
+    font-weight: 600;
+}
+
+/* Notes */
+.cell-notes {
+    font-size: 0.6rem;
+    color: #666;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-items: center;
+    padding: 2px;
+}
+
+/* States */
+.kenken-cell.selected {
+    background-color: var(--primary-pink);
+    color: white;
+}
+
+.kenken-cell.highlighted {
+    background-color: var(--highlight-blue);
+}
+
+.kenken-cell.error {
+    color: var(--error-color);
+    background-color: #fee2e2;
+}
+
+.kenken-cell:hover:not(.selected) {
+    background-color: #f8fafc;
 }

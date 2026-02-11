@@ -17,57 +17,82 @@
         <header class="game-header">
             <div class="title-row">
                 <h1>🧩 PC's Sudoku 🧩</h1>
-                <button class="help-btn" id="help-btn" title="遊戲說明">❓</button>
+                <button class="help-btn" id="help-btn" title="How to play">❓</button>
             </div>
             <div class="help-panel" id="help-panel">
                 <div class="help-content">
-                    <h3>📖 遊戲說明</h3>
+                    <h3>📖 How to Play</h3>
                     <div class="help-section">
-                        <strong>🔢 數獨</strong>:填1-9使每行,每列,每個3×3格子都不重複
+                        <strong>🔢 Sudoku</strong>:Fill in numbers 1–9 so that each row, each column, and each 3×3 box
+                        contains no repeats.
                     </div>
                     <div class="help-section">
-                        <strong>🎯 殺手數獨</strong>:數獨規則+虛線籠子內數字總和等於提示數
+                        <strong>🎯 Killer Sudoku</strong>:Sudoku rules + the numbers inside each dashed cage must add up
+                        to the given clue.
                     </div>
                     <div class="help-section">
-                        <strong>🎮 2048</strong>:方向移動方塊,相同數字合併,目標2048
+                        <strong>🎮 2048</strong>:Slide the tiles in a direction. Matching numbers merge. Reach 2048.
                     </div>
                     <div class="help-section">
-                        <strong>🔴🔵 Oh h1</strong>:點擊切換紅/藍,無連3同色,每行列紅藍相等
+                        <strong>🔴🔵 Oh h1</strong>:Click to switch between red and blue. No three in a row of the same
+                        color. Each row and column must have the same number of red and blue.
                     </div>
                     <div class="help-section">
-                        <strong>🖼️ Nonogram</strong>:依數字間格填滿格子，完成圖案
+                        <strong>🖼️ Nonogram</strong>:Fill in the cells according to the numbers in the clues to
+                        complete the picture.
                     </div>
                     <div class="help-section">
-                        <strong>🧮 Nerdle</strong>:猜算式,綠:全對/紫:符號對位置錯/黑:全錯
+                        <strong>🧮 Nerdle</strong>:Guess the equation.Green: correct. Purple: correct symbol, wrong
+                        position. Black: wrong.
+                    </div>
+                    <div class="help-section">
+                        <strong>💣 Minesweeper</strong>:Left-click to reveal a tile. Right-click or long-press to place
+                        a flag for a mine. Numbers show how many mines are nearby.
+                    </div>
+                    <div class="help-section">
+                        <strong>🎯 Mastermind</strong>:Guess the secret color code. Black peg = right color, right
+                        position. White peg = right color, wrong position.
+                    </div>
+                    <div class="help-section">
+                        <strong>🧮 KenKen</strong>:Fill grid with 1-N. Each row/col must be unique. Cages must met
+                        target using operation.
+                    </div>
+                    <div class="help-section">
+                        <strong>🔧 Pipe</strong>:Rotate pipes to connect all to the power source. Click to rotate 90°.
+                        Light up all pipes to win.
                     </div>
                 </div>
             </div>
             <div class="stats-bar">
                 <div class="stat-item difficulty-selector">
-                    <span class="stat-label">玩法</span>
+                    <span class="stat-label">Game</span>
                     <select id="game-mode" class="difficulty-select">
-                        <option value="normal" selected>數獨</option>
-                        <option value="killer">殺手數獨</option>
+                        <option value="normal" selected>Sudoku</option>
+                        <option value="killer">Killer</option>
                         <option value="2048">2048</option>
                         <option value="ohh1">Oh h1</option>
                         <option value="nonogram">Nonogram</option>
                         <option value="nerdle">Nerdle</option>
+                        <option value="minesweeper">MineS</option>
+                        <option value="mastermind">MasterM</option>
+                        <option value="kenken">KenKen</option>
+                        <option value="pipe">Pipe</option>
                     </select>
                 </div>
                 <div class="stat-item difficulty-selector">
-                    <span class="stat-label">難度</span>
+                    <span class="stat-label">Level</span>
                     <select id="difficulty" class="difficulty-select">
-                        <option value="easy" selected>一般</option>
-                        <option value="medium">中等</option>
-                        <option value="hard">困難</option>
+                        <option value="easy" selected>Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
                     </select>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label" id="mistakes-label">錯誤</span>
+                    <span class="stat-label" id="mistakes-label">Mistakes</span>
                     <span class="stat-value" id="mistakes">0/3</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">時間</span>
+                    <span class="stat-label">Time</span>
                     <span class="stat-value" id="timer">00:00</span>
                 </div>
             </div>
@@ -93,15 +118,26 @@
         <div class="game-controls">
             <button class="btn btn-notes" id="notes-btn">
                 <span class="btn-icon">✏️</span>
-                <span>筆記</span>
+                <span>Notes</span>
             </button>
             <button class="btn btn-hint" id="hint-btn">
                 <span class="btn-icon">💡</span>
-                <span>提示</span>
+                <span>Hint</span>
             </button>
             <button class="btn btn-restart" id="restart-btn">
                 <span class="btn-icon">🔄</span>
-                <span>新遊戲</span>
+                <span>New Game</span>
+            </button>
+        </div>
+
+        <div class="minesweeper-controls" id="minesweeper-controls" style="display: none;">
+            <button class="btn btn-mine-mode active" id="mine-mode-btn">
+                <span class="btn-icon">⛏️</span>
+                <span>Dig</span>
+            </button>
+            <button class="btn btn-mine-mode" id="mine-flag-btn">
+                <span class="btn-icon">🚩</span>
+                <span>Flag Mine</span>
             </button>
         </div>
 
