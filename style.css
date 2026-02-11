@@ -1419,7 +1419,7 @@ body::before {
 
 /* ===== Minesweeper 踩地雷遊戲樣式 ===== */
 
-/* Minesweeper 模式基礎樣式 */
+/* Minesweeper 模式 基礎 樣式 */
 .sudoku-board.mode-minesweeper {
     width: auto;
     justify-content: center;

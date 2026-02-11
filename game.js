@@ -1762,7 +1762,7 @@ class SudokuGame {
             visited[row][col] = true;
             cage.cells.push([row, col]);
 
-            // 添加相鄰的未訪問格子到候選隊列
+            // 添加相鄰的未訪問格子到候選隊列 
             for (const [dr, dc] of directions) {
                 const newRow = row + dr;
                 const newCol = col + dc;
@@ -1776,7 +1776,7 @@ class SudokuGame {
     }
 
     getCageBorders(row, col) {
-        // 計算格子在籠子中的邊框位置
+        // 計算格子在籠子中的邊框位置 
         const cageIndex = this.cellToCage[row][col];
         if (cageIndex === -1) return { top: false, right: false, bottom: false, left: false };
 
