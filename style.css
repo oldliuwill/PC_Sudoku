@@ -1919,22 +1919,26 @@ body::before {
 
 /* Scoped to .mode-pipe to avoid affecting other game modes */
 .sudoku-board.mode-pipe.grid-5 {
-    grid-template-columns: repeat(5, 48px);
-    grid-template-rows: repeat(5, 48px);
+    grid-template-columns: repeat(5, 60px);
+    grid-template-rows: repeat(5, 60px);
 }
 
 .sudoku-board.mode-pipe.grid-7 {
     /* Fixed width ensures tight packing without gaps */
-    grid-template-columns: repeat(7, 48px);
+    grid-template-columns: repeat(7, 50px);
+    grid-template-rows: repeat(7, 50px);
 }
 
 .sudoku-board.mode-pipe.grid-9 {
-    grid-template-columns: repeat(9, 40px);
+    grid-template-columns: repeat(9, 42px);
+    grid-template-rows: repeat(9, 42px);
 }
 
 
 
 .pipe-cell {
+    width: 100%;
+    height: 100%;
     background: #34495e;
     border: 0;
     position: relative;
