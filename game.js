@@ -1382,6 +1382,10 @@ class SudokuGame {
         this.difficulty = document.getElementById('difficulty').value;
         this.gameMode = document.getElementById('game-mode').value;
 
+        // Reset container width class
+        const gameContainer = document.querySelector('.game-container');
+        if (gameContainer) gameContainer.classList.remove('mode-pipe-container');
+
         // 2048 模式
         if (this.gameMode === '2048') {
             // 根據難度選擇網格大小：簡單4x4、中等5x5、困難6x6
@@ -1557,6 +1561,7 @@ class SudokuGame {
 
         // Pipe / Netwalk 旋轉管線模式
         if (this.gameMode === 'pipe') {
+            if (gameContainer) gameContainer.classList.add('mode-pipe-container');
             const configs = {
                 easy: 5,
                 medium: 7,
@@ -1868,7 +1873,7 @@ class SudokuGame {
     renderBoard() {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-kenken', 'mode-mastermind'); // 移除所有模式的樣式
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-kenken', 'mode-mastermind', 'mode-pipe'); // 移除所有模式的樣式
         // 移除所有格子大小類別
         boardElement.classList.remove('grid-4', 'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
 
@@ -2017,7 +2022,7 @@ class SudokuGame {
 
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
+        boardElement.classList.remove('mode-2048', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-pipe', 'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16', 'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-ohh1', `grid-${this.gameOhh1.size}`);
 
         for (let row = 0; row < this.gameOhh1.size; row++) {
@@ -2062,7 +2067,7 @@ class SudokuGame {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
         // 移除所有遊戲模式的 CSS 類，確保切換時不會有殘留樣式
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nerdle', 'mode-minesweeper',
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nerdle', 'mode-minesweeper', 'mode-pipe',
             'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16',
             'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-nonogram', `grid-${this.gameNonogram.size}`);
@@ -2137,7 +2142,7 @@ class SudokuGame {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
         // 移除所有遊戲模式的 CSS 類，確保切換時不會有殘留樣式
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle',
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-pipe',
             'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16',
             'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-minesweeper', `grid-${ms.cols}`);
@@ -2249,7 +2254,7 @@ class SudokuGame {
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
         // 移除其他模式的樣式
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-minesweeper',
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-minesweeper', 'mode-pipe',
             'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16',
             'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-nerdle');
@@ -2366,7 +2371,7 @@ class SudokuGame {
         const mm = this.gameMastermind;
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper',
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-pipe',
             'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16',
             'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-mastermind');
@@ -2534,7 +2539,7 @@ class SudokuGame {
         const kk = this.gameKenKen;
         const boardElement = document.getElementById('sudoku-board');
         boardElement.innerHTML = '';
-        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-mastermind',
+        boardElement.classList.remove('mode-2048', 'mode-ohh1', 'mode-nonogram', 'mode-nerdle', 'mode-minesweeper', 'mode-mastermind', 'mode-pipe',
             'grid-5', 'grid-6', 'grid-8', 'grid-9', 'grid-10', 'grid-12', 'grid-15', 'grid-16',
             'grid-2048-4', 'grid-2048-5', 'grid-2048-6');
         boardElement.classList.add('mode-kenken', `grid-${kk.size}`);

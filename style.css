@@ -272,17 +272,17 @@ body::before {
     color: var(--primary-pink);
 }
 
-/* 3x3 box borders */
-.sudoku-cell:nth-child(3n) {
+/* 3x3 box borders - Only for standard Sudoku (approximate check by excluding other modes) */
+.sudoku-board:not(.mode-pipe):not(.mode-kenken):not(.mode-ohh1):not(.mode-nonogram):not(.mode-minesweeper):not(.mode-nerdle):not(.mode-mastermind):not(.mode-2048) .sudoku-cell:nth-child(3n) {
     border-right: 2px solid var(--primary-pink);
 }
 
-.sudoku-cell:nth-child(9n) {
+.sudoku-board:not(.mode-pipe):not(.mode-kenken):not(.mode-ohh1):not(.mode-nonogram):not(.mode-minesweeper):not(.mode-nerdle):not(.mode-mastermind):not(.mode-2048) .sudoku-cell:nth-child(9n) {
     border-right: none;
 }
 
-.sudoku-cell:nth-child(n+19):nth-child(-n+27),
-.sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+.sudoku-board:not(.mode-pipe):not(.mode-kenken):not(.mode-ohh1):not(.mode-nonogram):not(.mode-minesweeper):not(.mode-nerdle):not(.mode-mastermind):not(.mode-2048) .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-board:not(.mode-pipe):not(.mode-kenken):not(.mode-ohh1):not(.mode-nonogram):not(.mode-minesweeper):not(.mode-nerdle):not(.mode-mastermind):not(.mode-2048) .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
     border-bottom: 2px solid var(--primary-pink);
 }
 
@@ -1906,22 +1906,52 @@ body::before {
 }
 
 /* Pipe / Netwalk Game Styles */
+/* Handled via grid cell size instead of container max-width */
+
 .mode-pipe {
-    gap: 2px;
+    gap: 1px;
     background: #2c3e50;
     padding: 5px;
+    display: grid;
+    justify-content: center;
+    overflow-x: auto;
 }
 
-.sudoku-board.grid-7 {
-    grid-template-columns: repeat(7, 1fr);
+/* Scoped to .mode-pipe to avoid affecting other game modes */
+.sudoku-board.mode-pipe.grid-5 {
+    grid-template-columns: repeat(5, 48px);
+    grid-template-rows: repeat(5, 48px);
 }
+
+.sudoku-board.mode-pipe.grid-7 {
+    /* Fixed width ensures tight packing without gaps */
+    grid-template-columns: repeat(7, 48px);
+}
+
+.sudoku-board.mode-pipe.grid-9 {
+    grid-template-columns: repeat(9, 40px);
+}
+
+
 
 .pipe-cell {
     background: #34495e;
-    border: 1px solid #2c3e50;
+    border: 0;
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    /* Subtle grid line */
+}
+
+/* Override default selected style for pipe cells */
+.pipe-cell.selected {
+    background: #34495e;
+    /* Keep original background */
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+    /* Clearer white border for selection */
+    z-index: 5;
+    /* Ensure border is visible */
 }
 
 .pipe-cell:hover:not(.pipe-source) {
@@ -2224,7 +2254,7 @@ body::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     filter: grayscale(100%) brightness(0.5);
     transition: all 0.3s ease;
 }
