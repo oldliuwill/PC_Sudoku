@@ -1071,6 +1071,7 @@ class GameKenKen {
             }
         }
 
+        return conflicts;
     }
 }
 
